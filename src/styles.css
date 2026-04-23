@@ -73,8 +73,13 @@ canvas {
   position: absolute;
   left: clamp(18px, 4vw, 48px);
   top: clamp(90px, 17vh, 180px);
-  z-index: 24;
+  z-index: 80;
   max-width: min(760px, calc(100vw - 32px));
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  color: #ecfffb;
+  text-shadow: 0 6px 24px rgba(0, 0, 0, 0.75);
 }
 
 .hero-copy h1 {
@@ -100,9 +105,11 @@ canvas {
   position: absolute;
   left: clamp(18px, 4vw, 48px);
   bottom: clamp(20px, 4vh, 42px);
-  z-index: 24;
+  z-index: 82;
   display: flex;
   gap: 8px;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .hero-actions button,
@@ -224,12 +231,32 @@ canvas {
   }
 
   .hero-actions {
-    left: 14px;
-    right: 14px;
-    bottom: 16px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(3, 14, 22, 0.78);
+    border: 1px solid rgba(124, 218, 198, 0.22);
+    backdrop-filter: blur(8px);
+  }
+
+  .hero-loader .bot-dialogue {
+    display: none;
+  }
+
+  .hero-action-simple {
+    min-width: 0;
+    width: 100%;
+    min-height: 38px;
+    padding: 8px 6px !important;
+    font-size: 0.6rem !important;
+    letter-spacing: 0.05em !important;
   }
 
   .site-nav {

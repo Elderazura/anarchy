@@ -77,7 +77,13 @@ function Walker({ mode, quipText }) {
     <group ref={group} position={[-6.8, -1.2, 0]} scale={mode === "hero" ? 1.55 : 1.35}>
       <primitive object={character.scene} />
       {quipText ? (
-        <Html position={[1.1, 2.5, 0.15]} transform distanceFactor={12.6} style={{ pointerEvents: "none" }}>
+        <Html
+          position={[1.1, 2.5, 0.15]}
+          transform
+          zIndexRange={[6, 0]}
+          distanceFactor={12.6}
+          style={{ pointerEvents: "none" }}
+        >
           <div className="bot-dialogue bot-dialogue-inworld">
             <p className="bot-dialogue-tag">SENTINEL</p>
             <p>{quipText}</p>

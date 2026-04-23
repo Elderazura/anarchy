@@ -92,11 +92,11 @@ export default function Character({
 
   useEffect(() => {
     const root = group.current;
-    if (botPositionRef?.current) {
-      botPositionRef.current.copy(root.position);
-    }
     if (!root) {
       return;
+    }
+    if (botPositionRef?.current) {
+      botPositionRef.current.copy(root.position);
     }
 
     if (!mixerRef.current) {
@@ -296,6 +296,7 @@ export default function Character({
         <Html
           position={[1.2, 2.8, 0.2]}
           transform
+          zIndexRange={[6, 0]}
           distanceFactor={11.8}
           style={{ pointerEvents: "none" }}
         >

@@ -9,7 +9,6 @@ import World from "./components/World";
 
 export default function App() {
   const [enteredSite, setEnteredSite] = useState(false);
-  const [heroReady, setHeroReady] = useState(false);
   const [quipText, setQuipText] = useState("");
   const [quipVisible, setQuipVisible] = useState(false);
   const botPositionRef = useRef(new THREE.Vector3(0, -1.2, -2.1));
@@ -76,7 +75,7 @@ export default function App() {
                 onSpeak={() => 3.2}
                 botLine={quipVisible ? quipText : ""}
                 isSpeaking={false}
-                onIntroReady={() => setHeroReady(true)}
+                onIntroReady={() => {}}
                 botPositionRef={botPositionRef}
               />
               <OrbitControls
@@ -93,41 +92,34 @@ export default function App() {
           <div className="logo-badge">
             <img src="/branding/anarchy-logo.png" alt="Anarchy Studios" />
           </div>
-          {heroReady ? (
-            <>
-              <div className="hero-copy">
-                <p className="section-kicker">Cinematic Character Worlds</p>
-                <h1>The Sentinel awakens before you enter the Anarchy world.</h1>
-                <p>
-                  Start from this portal scene, choose your path, and transition into the full studio
-                  experience.
-                </p>
-              </div>
-              <div className="hero-actions">
-                <button
-                  type="button"
-                  className="hero-action-simple hero-action-main"
-                  onClick={() => enterSiteAndScroll(worksRef)}
-                >
-                  Work
-                </button>
-                <button
-                  type="button"
-                  className="hero-action-simple"
-                  onClick={() => enterSiteAndScroll(aboutRef)}
-                >
-                  Studio
-                </button>
-                <button
-                  type="button"
-                  className="hero-action-simple"
-                  onClick={() => enterSiteAndScroll(contactRef)}
-                >
-                  Contact
-                </button>
-              </div>
-            </>
-          ) : null}
+          <div className="hero-copy">
+            <p className="section-kicker">Cinematic Character Worlds</p>
+            <h1>Welcome to Anarchy Studios</h1>
+            <p>Animation | VFX | AI | Crypto</p>
+          </div>
+          <div className="hero-actions">
+            <button
+              type="button"
+              className="hero-action-simple hero-action-main"
+              onClick={() => enterSiteAndScroll(worksRef)}
+            >
+              Work
+            </button>
+            <button
+              type="button"
+              className="hero-action-simple"
+              onClick={() => enterSiteAndScroll(aboutRef)}
+            >
+              Studio
+            </button>
+            <button
+              type="button"
+              className="hero-action-simple"
+              onClick={() => enterSiteAndScroll(contactRef)}
+            >
+              Contact
+            </button>
+          </div>
         </section>
       ) : null}
 
