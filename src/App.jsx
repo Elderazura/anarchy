@@ -1,11 +1,10 @@
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { AnimatePresence, motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Character from "./components/Character";
 import SiteBackgroundBot from "./components/SiteBackgroundBot";
-import { generateBotQuip } from "./lib/botQuips";
 import World from "./components/World";
 import LoadingScreen from "./components/LoadingScreen";
 import ShowreelPlayer from "./components/ShowreelPlayer";
@@ -22,8 +21,6 @@ import ScrollRevealText from "./components/ui/ScrollRevealText";
 export default function App() {
   const [enteredSite, setEnteredSite] = useState(false);
   const [sitePage, setSitePage] = useState("home");
-  const [quipText, setQuipText] = useState("");
-  const [quipVisible, setQuipVisible] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const botPositionRef = useRef(new THREE.Vector3(0, -1.2, -2.1));
   const worksRef = useRef(null);
@@ -43,36 +40,6 @@ export default function App() {
     },
     [scrollToSection],
   );
-
-  useEffect(() => {
-    let active = true;
-    let intervalId;
-    let hideTimer;
-
-    const showQuip = async () => {
-      const text = await generateBotQuip(enteredSite ? "site" : "hero");
-      if (!active) {
-        return;
-      }
-      setQuipText(text);
-      setQuipVisible(true);
-      hideTimer = window.setTimeout(() => {
-        if (active) {
-          setQuipVisible(false);
-        }
-      }, 5600);
-    };
-
-    const start = window.setTimeout(showQuip, 2600);
-    intervalId = window.setInterval(showQuip, 24000);
-
-    return () => {
-      active = false;
-      window.clearTimeout(start);
-      window.clearTimeout(hideTimer);
-      window.clearInterval(intervalId);
-    };
-  }, [enteredSite]);
 
   return (
     <>
@@ -97,7 +64,7 @@ export default function App() {
                 <World botPositionRef={botPositionRef} />
                 <Character
                   onSpeak={() => 3.2}
-                  botLine={quipVisible ? quipText : ""}
+                  botLine=""
                   isSpeaking={false}
                   onIntroReady={() => setSceneReady(true)}
                   botPositionRef={botPositionRef}
@@ -118,10 +85,22 @@ export default function App() {
               <img src="/branding/anarchy-logo.png" alt="Anarchy Studios" />
             </div>
             <div className="hero-copy">
-              <h1>
-                <ScrollRevealText text="Welcome to Anarchy Studios" stagger={0.05} />
-              </h1>
-              <p>Animation | VFX | AI | Crypto</p>
+              <motion.h1
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              >
+                Welcome to
+                <br />
+                Anarchy Studios
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.9 }}
+              >
+                Animation | VFX | AI | Crypto
+              </motion.p>
             </div>
             <div className="hero-actions">
               <ShimmerButton onClick={() => enterSiteAndScroll(worksRef)}>Work</ShimmerButton>
