@@ -31,8 +31,9 @@ canvas {
   height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at 20% 35%, rgba(72, 130, 142, 0.28), transparent 42%),
-    linear-gradient(130deg, #03070d 5%, #05101b 55%, #04070d 100%);
+    radial-gradient(circle at 8% 18%, rgba(68, 103, 137, 0.32), transparent 28%),
+    radial-gradient(circle at 55% 75%, rgba(28, 63, 78, 0.2), transparent 45%),
+    linear-gradient(130deg, #02060d 5%, #050d1a 55%, #03060c 100%);
 }
 
 .hero-backdrop {
@@ -44,7 +45,7 @@ canvas {
 .hero-noise-layer {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 6;
   background-image:
     linear-gradient(transparent 96%, rgba(255, 255, 255, 0.04) 100%),
     radial-gradient(circle at 10% 20%, rgba(126, 196, 190, 0.14), transparent 32%);
@@ -55,57 +56,59 @@ canvas {
 
 .logo-badge {
   position: absolute;
-  top: 18px;
-  left: 18px;
-  z-index: 24;
+  top: 12px;
+  left: 12px;
+  z-index: 40;
   display: inline-flex;
   align-items: center;
 }
 
 .logo-badge img {
-  width: clamp(92px, 12vw, 154px);
+  width: clamp(106px, 13vw, 182px);
   height: auto;
   display: block;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.56));
 }
 
 .hero-copy {
   position: absolute;
-  left: clamp(18px, 4vw, 48px);
-  top: clamp(90px, 17vh, 180px);
-  z-index: 80;
-  max-width: min(760px, calc(100vw - 32px));
+  left: clamp(34px, 8vw, 100px);
+  top: 48%;
+  transform: translateY(-50%);
+  z-index: 42;
+  max-width: min(620px, calc(100vw - 40px));
   opacity: 1 !important;
   visibility: visible !important;
   display: block !important;
   color: #ecfffb;
-  text-shadow: 0 6px 24px rgba(0, 0, 0, 0.75);
+  text-shadow: 0 7px 30px rgba(0, 0, 0, 0.88);
 }
 
 .hero-copy h1 {
-  margin: 10px 0 14px;
-  font-size: clamp(2.2rem, 5.8vw, 5.6rem);
+  margin: 0 0 18px;
+  font-size: clamp(2.1rem, 5.6vw, 4.9rem);
   font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
-  line-height: 0.95;
+  line-height: 1.06;
   letter-spacing: 0.01em;
-  max-width: 12ch;
+  max-width: 12.5ch;
   text-wrap: balance;
-  color: #e8fffb;
+  color: #f1f8fa;
 }
 
 .hero-copy p {
   margin: 0;
-  max-width: 62ch;
-  color: #b8d3d8;
-  font-size: clamp(0.9rem, 1.4vw, 1.05rem);
-  line-height: 1.5;
+  max-width: 45ch;
+  color: #78bfc0;
+  font-size: clamp(1.1rem, 2vw, 2rem);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
 }
 
 .hero-actions {
   position: absolute;
-  left: clamp(18px, 4vw, 48px);
-  bottom: clamp(20px, 4vh, 42px);
-  z-index: 82;
+  left: clamp(34px, 8vw, 100px);
+  bottom: 26px;
+  z-index: 44;
   display: flex;
   gap: 8px;
   opacity: 1 !important;
@@ -115,12 +118,12 @@ canvas {
 .hero-actions button,
 .site-nav button {
   border: 1px solid rgba(128, 216, 200, 0.5);
-  background: rgba(5, 18, 27, 0.76);
+  background: rgba(6, 20, 31, 0.82);
   color: #ddfff8;
   border-radius: 999px;
-  padding: 8px 13px;
-  font-size: 0.68rem;
-  letter-spacing: 0.07em;
+  padding: 7px 16px;
+  font-size: 0.62rem;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease;
@@ -133,18 +136,28 @@ canvas {
 }
 
 .hero-action-simple {
-  min-width: 90px;
+  min-width: 82px;
 }
 
 .hero-action-main {
-  background: rgba(35, 124, 124, 0.34) !important;
+  background: linear-gradient(145deg, rgba(76, 143, 151, 0.44), rgba(20, 76, 96, 0.48)) !important;
   border-color: rgba(166, 246, 230, 0.92) !important;
   color: #f4fffd !important;
 }
 
 .studio-site {
+  position: relative;
   min-height: 100vh;
   background: linear-gradient(180deg, #04070d 0%, #08131d 50%, #071018 100%);
+}
+
+.site-background-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.82;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.76), rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0.7));
 }
 
 .site-nav {
@@ -170,6 +183,8 @@ canvas {
 }
 
 .works-section {
+  position: relative;
+  z-index: 2;
   min-height: 100vh;
   padding: 90px 22px 20px;
   display: grid;
@@ -200,6 +215,28 @@ canvas {
   max-width: 680px;
 }
 
+.content-section p {
+  color: #c2d8dc;
+  max-width: 760px;
+}
+
+.section-cta {
+  margin-top: 12px;
+  border: 1px solid rgba(146, 237, 224, 0.54);
+  background: rgba(6, 28, 36, 0.72);
+  color: #e5fffa;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.section-cta:hover {
+  background: rgba(12, 42, 50, 0.82);
+}
+
 .showreel-media {
   margin-top: 14px;
   height: 240px;
@@ -223,11 +260,19 @@ canvas {
 
 @media (max-width: 780px) {
   .hero-copy h1 {
-    max-width: 15ch;
+    max-width: 13ch;
+    font-size: clamp(1.7rem, 9vw, 2.4rem);
   }
 
   .hero-copy {
-    top: 78px;
+    left: 16px;
+    top: 98px;
+    transform: none;
+    max-width: calc(100vw - 24px);
+  }
+
+  .hero-copy p {
+    font-size: 0.9rem;
   }
 
   .hero-actions {
@@ -247,7 +292,23 @@ canvas {
   }
 
   .hero-loader .bot-dialogue {
-    display: none;
+    display: block;
+  }
+
+  .bot-dialogue {
+    width: 64px;
+    padding: 3px 4px;
+    border-radius: 6px;
+  }
+
+  .bot-dialogue p {
+    font-size: 0.23rem;
+    line-height: 1.1;
+  }
+
+  .bot-dialogue-tag {
+    font-size: 0.15rem;
+    margin-bottom: 2px !important;
   }
 
   .hero-action-simple {
@@ -272,8 +333,16 @@ canvas {
 }
 
 .content-section {
+  position: relative;
+  z-index: 2;
   min-height: 70vh;
   padding: 80px 22px 30px;
+}
+
+.inside-page-placeholder {
+  min-height: calc(100vh - 110px);
+  display: grid;
+  align-content: center;
 }
 
 .ui-shell {
@@ -366,12 +435,12 @@ canvas {
 }
 
 .bot-dialogue {
-  width: 48px;
-  padding: 2px 2px;
-  border-radius: 4px;
-  background: linear-gradient(130deg, rgba(6, 19, 28, 0.88), rgba(12, 42, 44, 0.84));
-  border: 1px solid rgba(103, 214, 190, 0.55);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.26);
+  width: 58px;
+  padding: 3px 4px;
+  border-radius: 6px;
+  background: linear-gradient(130deg, rgba(6, 28, 39, 0.9), rgba(8, 43, 53, 0.88));
+  border: 1px solid rgba(118, 212, 195, 0.8);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.32);
   color: #dbfff5;
 }
 
@@ -382,24 +451,24 @@ canvas {
 .bot-dialogue-inworld::after {
   content: "";
   position: absolute;
-  right: 5px;
-  bottom: -3px;
+  right: 8px;
+  bottom: -4px;
   width: 0;
   height: 0;
-  border-left: 2px solid transparent;
-  border-right: 2px solid transparent;
-  border-top: 3px solid rgba(12, 42, 44, 0.9);
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 4px solid rgba(8, 43, 53, 0.88);
 }
 
 .bot-dialogue p {
   margin: 0;
-  font-size: 0.19rem;
-  line-height: 1.02;
+  font-size: 0.22rem;
+  line-height: 1.08;
 }
 
 .bot-dialogue-tag {
-  margin-bottom: 1px !important;
-  font-size: 0.15rem;
+  margin-bottom: 2px !important;
+  font-size: 0.16rem;
   letter-spacing: 0.04em;
   color: #85dacc;
 }

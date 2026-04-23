@@ -4,17 +4,19 @@ import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import Character from "./components/Character";
 import ShowreelBotWalk from "./components/ShowreelBotWalk";
+import SiteBackgroundBot from "./components/SiteBackgroundBot";
 import { generateBotQuip } from "./lib/botQuips";
 import World from "./components/World";
 
 export default function App() {
   const [enteredSite, setEnteredSite] = useState(false);
+  const [sitePage, setSitePage] = useState("home");
   const [quipText, setQuipText] = useState("");
   const [quipVisible, setQuipVisible] = useState(false);
   const botPositionRef = useRef(new THREE.Vector3(0, -1.2, -2.1));
   const worksRef = useRef(null);
   const aboutRef = useRef(null);
-  const contactRef = useRef(null);
+  const servicesRef = useRef(null);
 
   const scrollToSection = useCallback((ref) => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -93,8 +95,11 @@ export default function App() {
             <img src="/branding/anarchy-logo.png" alt="Anarchy Studios" />
           </div>
           <div className="hero-copy">
-            <p className="section-kicker">Cinematic Character Worlds</p>
-            <h1>Welcome to Anarchy Studios</h1>
+            <h1>
+              Welcome to
+              <br />
+              Anarchy Studios
+            </h1>
             <p>Animation | VFX | AI | Crypto</p>
           </div>
           <div className="hero-actions">
@@ -115,40 +120,55 @@ export default function App() {
             <button
               type="button"
               className="hero-action-simple"
-              onClick={() => enterSiteAndScroll(contactRef)}
+              onClick={() => enterSiteAndScroll(servicesRef)}
             >
-              Contact
+              Services
             </button>
           </div>
         </section>
       ) : null}
 
-      {enteredSite ? <main className="studio-site"> 
+      {enteredSite ? <main className="studio-site">
+        <div className="site-background-layer">
+          <SiteBackgroundBot />
+        </div>
         <header className="site-nav">
           <div className="logo-badge">
             <img src="/branding/anarchy-logo.png" alt="Anarchy Studios" />
           </div>
           <nav>
-            <button type="button" onClick={() => scrollToSection(worksRef)}>
+            <button type="button" onClick={() => setSitePage("home")}>
+              Home
+            </button>
+            <button type="button" onClick={() => sitePage === "home" ? scrollToSection(worksRef) : setSitePage("home")}>
               Work
             </button>
-            <button type="button" onClick={() => scrollToSection(aboutRef)}>
+            <button type="button" onClick={() => sitePage === "home" ? scrollToSection(aboutRef) : setSitePage("home")}>
               Studio
             </button>
-            <button type="button" onClick={() => scrollToSection(contactRef)}>
-              Contact
+            <button type="button" onClick={() => sitePage === "home" ? scrollToSection(servicesRef) : setSitePage("home")}>
+              Services
             </button>
           </nav>
         </header>
 
-        <section ref={worksRef} className="works-section">
+        {sitePage === "home" ? (
+          <>
+            <section ref={worksRef} className="works-section">
           <div className="showreel-card">
-            <p className="section-kicker">Main Showreel</p>
-            <h1>Stories forged in motion, light, and rebellion.</h1>
+            <p className="section-kicker">Watch The Showreel</p>
+            <h1>We have worked across diverse clients and visual worlds.</h1>
             <p>
-              This is where Anarchy&apos;s latest visuals drop first. Signature cinematic reels,
-              stylized campaigns, and experiments that cut through noise.
+              Start with our reel to feel our range: campaigns, stylized worlds, and high-impact
+              motion stories built for brands that want to stand out.
             </p>
+            <button
+              type="button"
+              className="section-cta"
+              onClick={() => setSitePage("works")}
+            >
+              Explore all works
+            </button>
             <div className="showreel-media">SHOWREEL PLAYBACK SURFACE</div>
           </div>
           <div className="showreel-bot-lane">
@@ -157,14 +177,48 @@ export default function App() {
         </section>
 
         <section ref={aboutRef} className="content-section">
-          <p className="section-kicker">Know About Studio</p>
-          <h2>We design worlds with character-first storytelling.</h2>
+          <p className="section-kicker">About The Studio</p>
+          <h2>We are intentionally crazy about craft, story, and bold visual risk.</h2>
+          <p>
+            Anarchy Studio is a small high-intensity crew shaping animation, VFX, and AI-assisted
+            visuals with a rebellious design voice.
+          </p>
+          <button
+            type="button"
+            className="section-cta"
+            onClick={() => setSitePage("studio")}
+          >
+            Meet the studio + team
+          </button>
         </section>
 
-        <section ref={contactRef} className="content-section">
-          <p className="section-kicker">Talk To Us</p>
-          <h2>Bring your wildest visual idea. We will build its pulse.</h2>
+        <section ref={servicesRef} className="content-section">
+          <p className="section-kicker">What We Do</p>
+          <h2>From concept to cinematic delivery, we build complete visual pipelines.</h2>
+          <p>
+            Creative development, 3D worlds, character animation, VFX sequences, and AI-powered
+            production workflows.
+          </p>
         </section>
+          </>
+        ) : (
+          <section className="inside-page-placeholder content-section">
+            <p className="section-kicker">
+              {sitePage === "works" ? "Works Page" : "Studio Page"}
+            </p>
+            <h2>
+              {sitePage === "works"
+                ? "All client projects and case studies will live here next."
+                : "Studio story, team profiles, and process breakdown will live here next."}
+            </h2>
+            <p>
+              This inside page shell is now wired. Next step can be building the full content layout.
+            </p>
+            <button type="button" className="section-cta" onClick={() => setSitePage("home")}>
+              Back to home sections
+            </button>
+          </section>
+        )}
       </main> : null}
     </>
   );
