@@ -2,6 +2,18 @@
   color: #d8efff;
   background: #05080e;
   font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+  --color-bg: #04070d;
+  --color-surface: rgba(255,255,255,0.04);
+  --color-border: rgba(255,255,255,0.08);
+  --color-accent: #7ec8e8;
+  --color-accent-2: #7ee8c0;
+  --color-text: #d8efff;
+  --color-text-muted: #89a8b8;
+  --radius-card: 14px;
+  --duration-fast: 160ms;
+  --duration-mid: 300ms;
+  --duration-slow: 500ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -296,18 +308,18 @@ canvas {
   }
 
   .bot-dialogue {
-    width: 64px;
-    padding: 3px 4px;
-    border-radius: 6px;
+    width: 76px;
+    padding: 4px 6px;
+    border-radius: 5px;
   }
 
   .bot-dialogue p {
-    font-size: 0.23rem;
-    line-height: 1.1;
+    font-size: 0.58rem;
+    line-height: 1.3;
   }
 
   .bot-dialogue-tag {
-    font-size: 0.15rem;
+    font-size: 0.46rem;
     margin-bottom: 2px !important;
   }
 
@@ -435,8 +447,8 @@ canvas {
 }
 
 .bot-dialogue {
-  width: 58px;
-  padding: 3px 4px;
+  width: 96px;
+  padding: 5px 7px;
   border-radius: 6px;
   background: linear-gradient(130deg, rgba(6, 28, 39, 0.9), rgba(8, 43, 53, 0.88));
   border: 1px solid rgba(118, 212, 195, 0.8);
@@ -462,13 +474,13 @@ canvas {
 
 .bot-dialogue p {
   margin: 0;
-  font-size: 0.22rem;
-  line-height: 1.08;
+  font-size: 0.68rem;
+  line-height: 1.35;
 }
 
 .bot-dialogue-tag {
   margin-bottom: 2px !important;
-  font-size: 0.16rem;
+  font-size: 0.55rem;
   letter-spacing: 0.04em;
   color: #85dacc;
 }
@@ -534,4 +546,51 @@ canvas {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+.shimmer-btn {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(166, 246, 230, 0.72);
+  background: linear-gradient(145deg, rgba(76, 143, 151, 0.36), rgba(20, 76, 96, 0.44));
+  color: #f4fffd;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.shimmer-btn-content {
+  position: relative;
+  z-index: 1;
+}
+
+.shimmer-btn-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.14) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer-move 2.4s linear infinite;
+}
+
+@keyframes shimmer-move {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animated-gradient-text {
+  background: linear-gradient(90deg, #7ec8e8, #7ee8c0, #a0c8ff, #7ec8e8);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 4s linear infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
 }
