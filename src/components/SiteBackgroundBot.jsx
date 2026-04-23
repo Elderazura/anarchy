@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -22,14 +22,8 @@ function retargetAnimation(clip, sourceRoot, targetRoot) {
   return new THREE.AnimationClip(clip.name, clip.duration, tracks);
 }
 
-// ---------------------------------------------------------------------------
-// Scene definitions — each scene is a named sequence of beats.
-// A beat: { clip, duration (s), speed (units/s), zone }
-// Zones: "far" (deep bg), "mid" (middle ground), "foreground" (walks past camera)
-// ---------------------------------------------------------------------------
 const SCENES = [
   {
-    // Casual patrol: walk → observe → nod → walk on
     name: "patrol",
     weight: 4,
     beats: [
@@ -40,7 +34,6 @@ const SCENES = [
     ],
   },
   {
-    // Training: sprint in → box → pull off a skill → rest
     name: "workout",
     weight: 2,
     beats: [
@@ -51,7 +44,6 @@ const SCENES = [
     ],
   },
   {
-    // Full send: sprint → big dance
     name: "party",
     weight: 1,
     beats: [
@@ -61,7 +53,6 @@ const SCENES = [
     ],
   },
   {
-    // Drama: stumble → collapse → rise → alert → flee
     name: "incident",
     weight: 1,
     beats: [
@@ -73,7 +64,6 @@ const SCENES = [
     ],
   },
   {
-    // Alert scout: startle → show skill → boom → slink away
     name: "scout",
     weight: 2,
     beats: [
@@ -84,7 +74,6 @@ const SCENES = [
     ],
   },
   {
-    // Far-bg showcase: skill → all-night-dance → idle
     name: "dance-far",
     weight: 1,
     beats: [
@@ -94,9 +83,8 @@ const SCENES = [
     ],
   },
   {
-    // THE MONEY SHOT — casual walk right past the camera in the foreground
     name: "foreground-cross",
-    weight: 0,   // only triggered by scene counter, never random
+    weight: 0,
     isForeground: true,
     beats: [
       { clip: "casual-walk", duration: 9.0, speed: 1.05, zone: "foreground" },
@@ -104,14 +92,12 @@ const SCENES = [
   },
 ];
 
-// Weighted random, excludes foreground-cross and previous scene
-function pickScene(previousName, sceneCount) {
-  if (sceneCount > 0 && sceneCount % 4 === 0) {
+function pickScene(previousName, sceneCount, lastFgScene) {
+  const canDoFg = sceneCount - lastFgScene >= 3;
+  if (canDoFg && Math.random() < 0.15) {
     return SCENES.find((s) => s.name === "foreground-cross");
   }
-  const eligible = SCENES.filter(
-    (s) => s.weight > 0 && s.name !== previousName,
-  );
+  const eligible = SCENES.filter((s) => s.weight > 0 && s.name !== previousName);
   const total = eligible.reduce((sum, s) => sum + s.weight, 0);
   let r = Math.random() * total;
   for (const scene of eligible) {
@@ -134,13 +120,9 @@ function getZoneTarget(zone) {
       z: THREE.MathUtils.randFloat(-4.5, -3.0),
     };
   }
-  // foreground: target is the far side (start pos set separately)
-  return { x: 0, z: -1.9 }; // overridden per-direction in effect
+  return { x: 0, z: -1.9 };
 }
 
-// ---------------------------------------------------------------------------
-// BotActor
-// ---------------------------------------------------------------------------
 function BotActor() {
   const group = useRef(null);
   const mixerRef = useRef(null);
@@ -150,35 +132,36 @@ function BotActor() {
   const sceneRef = useRef(null);
   const beatIndexRef = useRef(0);
   const sceneCountRef = useRef(0);
-  const fgFromRightRef = useRef(true); // alternates foreground cross direction
+  const lastFgSceneRef = useRef(-999);
+  const fgFromRightRef = useRef(true);
+  const speedMultRef = useRef(1.0);
 
-  // --- Scroll physics refs ---
-  const physicsRef = useRef('scene'); // 'scene' | 'falling' | 'fallen' | 'arising'
+  // Physics refs
+  const physicsRef = useRef("scene");
   const fallVelocityRef = useRef(0);
   const fallTriggeredRef = useRef(false);
   const ariseTriggeredRef = useRef(false);
-  const ariseQueueRef = useRef(false); // set from scroll listener, consumed in useFrame
-  const clipsRef = useRef({});        // mirror of clips for use in scroll listener
-
-  const [activeBeat, setActiveBeat] = useState(null);
+  const ariseQueueRef = useRef(false);
+  const fallAnimPlayedRef = useRef(false);
+  const clipsRef = useRef({});
 
   // Load all animations
-  const character    = useGLTF("/models/character.glb");
-  const gIdle        = useGLTF(resolveAnimationPath("idle"));
-  const gWalking     = useGLTF(resolveAnimationPath("walking"));
-  const gCasualWalk  = useGLTF(resolveAnimationPath("casual-walk"));
-  const gRunning     = useGLTF(resolveAnimationPath("running"));
-  const gRunFast     = useGLTF(resolveAnimationPath("run-fast"));
-  const gBoxing      = useGLTF(resolveAnimationPath("boxing-practice"));
-  const gUnsteady    = useGLTF(resolveAnimationPath("unsteady-walk"));
-  const gDead        = useGLTF(resolveAnimationPath("dead"));
-  const gArise       = useGLTF(resolveAnimationPath("arise"));
-  const gAlert       = useGLTF(resolveAnimationPath("alert"));
-  const gAgree       = useGLTF(resolveAnimationPath("agree-gesture"));
-  const gBoomDance   = useGLTF(resolveAnimationPath("boom-dance"));
-  const gAllNight    = useGLTF(resolveAnimationPath("all-night-dance"));
-  const gSkill01     = useGLTF(resolveAnimationPath("skill-01"));
-  const gSkill03     = useGLTF(resolveAnimationPath("skill-03"));
+  const character   = useGLTF("/models/character.glb");
+  const gIdle       = useGLTF(resolveAnimationPath("idle"));
+  const gWalking    = useGLTF(resolveAnimationPath("walking"));
+  const gCasualWalk = useGLTF(resolveAnimationPath("casual-walk"));
+  const gRunning    = useGLTF(resolveAnimationPath("running"));
+  const gRunFast    = useGLTF(resolveAnimationPath("run-fast"));
+  const gBoxing     = useGLTF(resolveAnimationPath("boxing-practice"));
+  const gUnsteady   = useGLTF(resolveAnimationPath("unsteady-walk"));
+  const gDead       = useGLTF(resolveAnimationPath("dead"));
+  const gArise      = useGLTF(resolveAnimationPath("arise"));
+  const gAlert      = useGLTF(resolveAnimationPath("alert"));
+  const gAgree      = useGLTF(resolveAnimationPath("agree-gesture"));
+  const gBoomDance  = useGLTF(resolveAnimationPath("boom-dance"));
+  const gAllNight   = useGLTF(resolveAnimationPath("all-night-dance"));
+  const gSkill01    = useGLTF(resolveAnimationPath("skill-01"));
+  const gSkill03    = useGLTF(resolveAnimationPath("skill-03"));
 
   const clips = useMemo(() => {
     const raw = {
@@ -206,7 +189,6 @@ function BotActor() {
     );
   }, [character.scene, gIdle, gWalking, gCasualWalk, gRunning, gRunFast, gBoxing, gUnsteady, gDead, gArise, gAlert, gAgree, gBoomDance, gAllNight, gSkill01, gSkill03]);
 
-  // Keep clipsRef in sync for use inside scroll listener (closure-safe)
   useEffect(() => { clipsRef.current = clips; }, [clips]);
 
   useEffect(() => {
@@ -218,212 +200,219 @@ function BotActor() {
     });
   }, [character.scene]);
 
-  // Boot the scene machine on mount
-  useEffect(() => {
-    const scene = pickScene(null, 0);
-    sceneRef.current = scene;
-    beatIndexRef.current = 0;
-    sceneCountRef.current = 1;
-    setActiveBeat(scene.beats[0]);
+  const playClip = useCallback((clipName) => {
+    const clip = clipsRef.current[clipName] ?? clipsRef.current.idle;
+    const mixer = mixerRef.current;
+    if (!clip || !mixer) return;
+    const action = mixer.clipAction(clip);
+    action.reset().fadeIn(0.45).play();
+    if (actionRef.current && actionRef.current !== action) {
+      actionRef.current.fadeOut(0.35);
+    }
+    actionRef.current = action;
   }, []);
 
-  // Scroll-driven physics listener — runs once on mount
+  const startBeat = useCallback((beat) => {
+    beatTimerRef.current = 0;
+    speedMultRef.current = 0.82 + Math.random() * 0.36;
+    playClip(beat.clip);
+    const root = group.current;
+    if (beat.zone === "foreground" && root) {
+      const fromRight = fgFromRightRef.current;
+      root.position.set(fromRight ? 5.4 : -5.4, -1.2, -1.9);
+      travelTargetRef.current.set(fromRight ? -5.4 : 5.4, -1.2, -1.9);
+    } else {
+      const t = getZoneTarget(beat.zone);
+      travelTargetRef.current.set(t.x, -1.2, t.z);
+    }
+  }, [playClip]);
+
+  // Boot scene machine on mount (after a short delay so clips are ready)
   useEffect(() => {
-    const FALL_SCROLL  = window.innerHeight * 0.85;
-    const ARISE_SCROLL = window.innerHeight * 1.4;
-    const RESET_SCROLL = window.innerHeight * 0.3;
+    const root = group.current;
+    if (!root) return;
+    mixerRef.current = new THREE.AnimationMixer(root);
+    const t = window.setTimeout(() => {
+      const scene = pickScene(null, 0, lastFgSceneRef.current);
+      sceneRef.current = scene;
+      beatIndexRef.current = 0;
+      sceneCountRef.current = 1;
+      startBeat(scene.beats[0]);
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [startBeat]);
+
+  // Scroll physics listener
+  useEffect(() => {
+    let fallDeadTimer = null;
 
     const onScroll = () => {
       const sy = window.scrollY;
+      const vh = window.innerHeight;
+      const FALL_SCROLL  = vh * 0.85;
+      const ARISE_SCROLL = vh * 1.2;
+      const RESET_SCROLL = vh * 0.2;
 
-      // User scrolled back up — reset the whole cycle so it can happen again
       if (sy < RESET_SCROLL && (fallTriggeredRef.current || ariseTriggeredRef.current)) {
+        if (fallDeadTimer) { window.clearTimeout(fallDeadTimer); fallDeadTimer = null; }
         fallTriggeredRef.current = false;
         ariseTriggeredRef.current = false;
         fallVelocityRef.current = 0;
-        physicsRef.current = 'scene';
-        if (group.current) {
-          group.current.position.y = -1.2;
-          group.current.rotation.z = 0;
+        fallAnimPlayedRef.current = false;
+        physicsRef.current = "scene";
+        const root = group.current;
+        if (root) {
+          root.position.y = -1.2;
+          root.rotation.z = 0;
+          root.rotation.x = 0;
         }
+        // Restart scene machine fresh
+        const scene = pickScene(null, sceneCountRef.current, lastFgSceneRef.current);
+        sceneRef.current = scene;
+        beatIndexRef.current = 0;
+        sceneCountRef.current++;
+        startBeat(scene.beats[0]);
         return;
       }
 
-      // Trigger fall when scroll crosses first section gap
-      if (sy > FALL_SCROLL && !fallTriggeredRef.current && physicsRef.current === 'scene') {
+      if (sy > FALL_SCROLL && !fallTriggeredRef.current && physicsRef.current === "scene") {
         fallTriggeredRef.current = true;
         fallVelocityRef.current = 0;
-        physicsRef.current = 'falling';
-        // Bring bot into mid-foreground so the fall is visible
-        if (group.current) {
-          group.current.position.z = THREE.MathUtils.lerp(group.current.position.z, -2.5, 1);
-        }
+        fallAnimPlayedRef.current = false;
+        physicsRef.current = "falling";
+        const root = group.current;
+        if (root) root.position.z = -2.5;
       }
 
-      // Trigger arise when user is into the next section
       if (
         sy > ARISE_SCROLL &&
         fallTriggeredRef.current &&
         !ariseTriggeredRef.current &&
-        (physicsRef.current === 'fallen' || physicsRef.current === 'falling')
+        (physicsRef.current === "fallen" || physicsRef.current === "falling")
       ) {
         ariseTriggeredRef.current = true;
         ariseQueueRef.current = true;
       }
     };
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  // When beat changes: swap animation + set travel target
-  useEffect(() => {
-    if (!activeBeat) return;
-
-    const root = group.current;
-    if (!mixerRef.current && root) {
-      mixerRef.current = new THREE.AnimationMixer(root);
-    }
-
-    const clip = clips[activeBeat.clip] ?? clips.idle;
-    if (clip && mixerRef.current) {
-      const action = mixerRef.current.clipAction(clip);
-      action.reset().fadeIn(0.55).play();
-      if (actionRef.current && actionRef.current !== action) {
-        actionRef.current.fadeOut(0.42);
-      }
-      actionRef.current = action;
-    }
-
-    beatTimerRef.current = 0;
-
-    // Position + travel target
-    if (activeBeat.zone === "foreground" && root) {
-      const fromRight = fgFromRightRef.current;
-      const startX = fromRight ? 5.4 : -5.4;
-      const endX   = fromRight ? -5.4 : 5.4;
-      root.position.set(startX, -1.2, -1.9);
-      travelTargetRef.current.set(endX, -1.2, -1.9);
-    } else {
-      const t = getZoneTarget(activeBeat.zone);
-      travelTargetRef.current.set(t.x, -1.2, t.z);
-    }
-  }, [activeBeat, clips]);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [startBeat]);
 
   useFrame((state, delta) => {
     const root = group.current;
     if (!root) return;
     mixerRef.current?.update(delta);
 
-    // --- ARISE QUEUE (from scroll listener) ---
+    // --- ARISE QUEUE ---
     if (ariseQueueRef.current) {
       ariseQueueRef.current = false;
-      // Place bot just below the camera's visible floor
       root.position.set(THREE.MathUtils.randFloat(-1.5, 1.5), -4.2, -3.0);
       root.rotation.z = 0;
       root.rotation.x = 0;
-      // Play arise animation
-      const ariseClip = clipsRef.current['arise'];
-      if (ariseClip && mixerRef.current) {
-        const action = mixerRef.current.clipAction(ariseClip);
-        action.reset().fadeIn(0.3).play();
-        if (actionRef.current && actionRef.current !== action) {
-          actionRef.current.fadeOut(0.3);
-        }
-        actionRef.current = action;
-      }
-      physicsRef.current = 'arising';
+      playClip("arise");
+      physicsRef.current = "arising";
     }
 
     // --- FALLING ---
-    if (physicsRef.current === 'falling') {
+    if (physicsRef.current === "falling") {
+      if (!fallAnimPlayedRef.current) {
+        fallAnimPlayedRef.current = true;
+        playClip("unsteady-walk");
+        // After 1.4s switch to dead
+        window.setTimeout(() => {
+          if (physicsRef.current === "falling" || physicsRef.current === "fallen") {
+            playClip("dead");
+          }
+        }, 1400);
+      }
+
       fallVelocityRef.current = Math.min(fallVelocityRef.current + 11 * delta, 9);
       root.position.y -= fallVelocityRef.current * delta;
-      // Drift toward camera and tilt during fall — makes it dramatic
       root.position.z = THREE.MathUtils.lerp(root.position.z, -2.2, 0.04);
       root.rotation.z = THREE.MathUtils.lerp(root.rotation.z, -0.45, 0.06);
+      root.rotation.x = THREE.MathUtils.lerp(root.rotation.x, 0.18, 0.04);
 
       if (root.position.y < -4.5) {
         root.position.y = -4.5;
-        physicsRef.current = 'fallen';
-        // Edge case: if user scrolled fast past arise threshold, queue arise now
-        if (window.scrollY > window.innerHeight * 1.4 && !ariseTriggeredRef.current) {
+        physicsRef.current = "fallen";
+        if (window.scrollY > window.innerHeight * 1.2 && !ariseTriggeredRef.current) {
           ariseTriggeredRef.current = true;
           ariseQueueRef.current = true;
         }
       }
-      return; // skip scene machine during fall
+      return;
     }
 
-    // --- FALLEN (parked below screen, waiting) ---
-    if (physicsRef.current === 'fallen') {
-      return; // scene machine paused
+    // --- FALLEN ---
+    if (physicsRef.current === "fallen") {
+      return;
     }
 
-    // --- ARISING (rising from below with arise animation) ---
-    if (physicsRef.current === 'arising') {
+    // --- ARISING ---
+    if (physicsRef.current === "arising") {
       root.position.y = THREE.MathUtils.lerp(root.position.y, -1.2, 0.022);
-      root.rotation.z = THREE.MathUtils.lerp(root.rotation.z, 0, 0.07);
+      root.rotation.z = THREE.MathUtils.lerp(root.rotation.z, 0, 0.08);
+      root.rotation.x = THREE.MathUtils.lerp(root.rotation.x, 0, 0.08);
 
       if (Math.abs(root.position.y - (-1.2)) < 0.06) {
         root.position.y = -1.2;
         root.rotation.z = 0;
-        physicsRef.current = 'scene';
-        // Resume scene machine with a fresh scene
-        const next = pickScene(null, sceneCountRef.current + 1);
-        sceneRef.current = next;
+        root.rotation.x = 0;
+        physicsRef.current = "scene";
+        // Post-arise: always play scout scene (bot reacts to the fall)
+        const recovery = SCENES.find((s) => s.name === "scout") ?? pickScene(null, sceneCountRef.current + 1, lastFgSceneRef.current);
+        sceneRef.current = recovery;
         beatIndexRef.current = 0;
-        sceneCountRef.current += 1;
-        setActiveBeat(next.beats[0]);
-      }
-      return; // skip scene machine while arising
-    }
-
-    // --- NORMAL SCENE MACHINE (only runs when physicsRef === 'scene') ---
-    if (!activeBeat) return;
-    beatTimerRef.current += delta;
-
-    // Advance beat when duration expires
-    if (beatTimerRef.current >= activeBeat.duration) {
-      const scene = sceneRef.current;
-      const nextIdx = beatIndexRef.current + 1;
-
-      if (nextIdx < scene.beats.length) {
-        beatIndexRef.current = nextIdx;
-        setActiveBeat(scene.beats[nextIdx]);
-      } else {
-        // Scene complete — pick next
-        const prevName = scene.name;
-        const count = sceneCountRef.current + 1;
-        sceneCountRef.current = count;
-        if (scene.isForeground) {
-          fgFromRightRef.current = !fgFromRightRef.current;
-        }
-        const next = pickScene(prevName, count);
-        sceneRef.current = next;
-        beatIndexRef.current = 0;
-        setActiveBeat(next.beats[0]);
+        sceneCountRef.current++;
+        startBeat(recovery.beats[0]);
       }
       return;
     }
 
-    // Move toward target
-    if (activeBeat.speed > 0) {
+    // --- SCENE MACHINE ---
+    if (!sceneRef.current) return;
+    beatTimerRef.current += delta;
+
+    const scene = sceneRef.current;
+    const beat = scene.beats[beatIndexRef.current];
+
+    if (beatTimerRef.current >= beat.duration) {
+      const nextIdx = beatIndexRef.current + 1;
+      if (nextIdx < scene.beats.length) {
+        beatIndexRef.current = nextIdx;
+        startBeat(scene.beats[nextIdx]);
+      } else {
+        if (scene.isForeground) fgFromRightRef.current = !fgFromRightRef.current;
+        const prevName = scene.name;
+        sceneCountRef.current++;
+        const next = pickScene(prevName, sceneCountRef.current, lastFgSceneRef.current);
+        if (next.isForeground) lastFgSceneRef.current = sceneCountRef.current;
+        sceneRef.current = next;
+        beatIndexRef.current = 0;
+        startBeat(next.beats[0]);
+      }
+      return;
+    }
+
+    // Movement
+    if (beat.speed > 0) {
+      const effectiveSpeed = beat.speed * speedMultRef.current;
       const toTarget = travelTargetRef.current.clone().sub(root.position);
       toTarget.y = 0;
       const dist = toTarget.length();
       if (dist > 0.05) {
-        root.position.addScaledVector(
-          toTarget.normalize(),
-          Math.min(dist, activeBeat.speed * delta),
-        );
+        root.position.addScaledVector(toTarget.normalize(), Math.min(dist, effectiveSpeed * delta));
         const yaw = Math.atan2(toTarget.x, toTarget.z);
-        root.rotation.y = THREE.MathUtils.lerp(root.rotation.y, yaw, 0.08);
+        root.rotation.y = THREE.MathUtils.lerp(root.rotation.y, yaw, 0.09);
       }
+    } else {
+      // Stationary: face camera
+      root.rotation.y = THREE.MathUtils.lerp(root.rotation.y, 0, 0.04);
+      root.position.y = -1.2 + Math.sin(state.clock.elapsedTime * 0.7) * 0.018;
     }
-
-    // Subtle Y float — stills feel alive
-    root.position.y = -1.2 + Math.sin(state.clock.elapsedTime * 0.7) * 0.018;
   });
 
   return (

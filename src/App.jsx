@@ -2,7 +2,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform, useSpring } from "framer-motion";
 import Character from "./components/Character";
 import SiteBackgroundBot from "./components/SiteBackgroundBot";
 import { generateBotQuip } from "./lib/botQuips";
@@ -15,6 +15,9 @@ import ContactSection from "./components/ContactSection";
 import ShimmerButton from "./components/ui/ShimmerButton";
 import AnimatedGradientText from "./components/ui/AnimatedGradientText";
 import PhysicsParticles from "./components/PhysicsParticles";
+import ShaderBackground from "./components/ui/ShaderBackground";
+import GlitchText from "./components/ui/GlitchText";
+import ScrollRevealText from "./components/ui/ScrollRevealText";
 
 export default function App() {
   const [enteredSite, setEnteredSite] = useState(false);
@@ -73,6 +76,7 @@ export default function App() {
 
   return (
     <>
+      <ShaderBackground />
       <LoadingScreen isReady={sceneReady} />
 
       <AnimatePresence mode="wait">
@@ -115,9 +119,7 @@ export default function App() {
             </div>
             <div className="hero-copy">
               <h1>
-                Welcome to
-                <br />
-                Anarchy Studios
+                <ScrollRevealText text="Welcome to Anarchy Studios" stagger={0.05} />
               </h1>
               <p>Animation | VFX | AI | Crypto</p>
             </div>
@@ -137,6 +139,20 @@ export default function App() {
               >
                 Services
               </button>
+            </div>
+
+            <div className="marquee-band" style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 44 }}>
+              <div className="marquee-track">
+                {["Animation", "VFX", "AI Production", "Crypto", "3D Worlds", "Character Animation", "Motion Design", "Generative Art"].flatMap((item, i) => [
+                  <span key={`a-${i}`} className="marquee-item">{item}</span>,
+                  <span key={`d-${i}`} className="marquee-item"><span className="marquee-dot">◆</span></span>,
+                ]).concat(
+                  ["Animation", "VFX", "AI Production", "Crypto", "3D Worlds", "Character Animation", "Motion Design", "Generative Art"].flatMap((item, i) => [
+                    <span key={`b-${i}`} className="marquee-item">{item}</span>,
+                    <span key={`e-${i}`} className="marquee-item"><span className="marquee-dot">◆</span></span>,
+                  ])
+                )}
+              </div>
             </div>
           </motion.section>
         ) : (
@@ -180,8 +196,9 @@ export default function App() {
                     transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <article className="content-panel panel-hero">
+                      <span className="editorial-number">01 / Works</span>
                       <p className="section-kicker">Watch The Showreel</p>
-                      <h1>Work across diverse clients, genres, and cinematic styles.</h1>
+                      <h1><GlitchText>Work across diverse clients, genres, and cinematic styles.</GlitchText></h1>
                       <p>
                         Explore campaigns, branded worlds, and experimental motion crafted for clients
                         who want visual identity with edge.
@@ -200,6 +217,8 @@ export default function App() {
                   <ShowreelPlayer />
                 </section>
 
+                <div className="section-divider" />
+
                 <section ref={aboutRef} className="content-section section-shell">
                   <motion.div
                     initial={{ opacity: 0, y: 32 }}
@@ -208,8 +227,9 @@ export default function App() {
                     transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <article className="content-panel">
+                      <span className="editorial-number">02 / Studio</span>
                       <p className="section-kicker">About The Studio</p>
-                      <h2>We are obsessively crazy about craft, timing, and visual rebellion.</h2>
+                      <h2><ScrollRevealText text="We are obsessively crazy about craft, timing, and visual rebellion." stagger={0.04} /></h2>
                       <p>
                         Small team. Heavy intent. We combine animation, VFX, and AI production to create
                         work that feels alive, risky, and unmistakably original.
@@ -227,6 +247,8 @@ export default function App() {
                   </motion.div>
                 </section>
 
+                <div className="section-divider" />
+
                 <section ref={servicesRef} className="content-section section-shell">
                   <motion.div
                     initial={{ opacity: 0, y: 32 }}
@@ -235,8 +257,9 @@ export default function App() {
                     transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <article className="content-panel">
+                      <span className="editorial-number">03 / Services</span>
                       <p className="section-kicker">What We Do</p>
-                      <h2>End-to-end visual pipelines from concept frames to final delivery.</h2>
+                      <h2><GlitchText>End-to-end visual pipelines from concept frames to final delivery.</GlitchText></h2>
                       <p>
                         Creative strategy, design direction, 3D environments, character animation, VFX,
                         and AI-assisted workflows designed for speed without losing artistic quality.
