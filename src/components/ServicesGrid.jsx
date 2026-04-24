@@ -1,5 +1,6 @@
 import { Film, Zap, Box, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
+import GlitchText from "./ui/GlitchText";
 import "./services.css";
 
 const ICON_MAP = { Film, Zap, Box, Cpu };
@@ -75,7 +76,7 @@ export default function ServicesGrid() {
       {/* ── Section header ────────────────────────────────── */}
       <header className="arsenal-header">
         <p className="arsenal-header__label">03 / Services</p>
-        <h2 className="arsenal-header__title">The Arsenal</h2>
+        <GlitchText as="h2" className="arsenal-header__title">The Arsenal</GlitchText>
         <p className="arsenal-header__tagline">What we&rsquo;re built for.</p>
       </header>
 

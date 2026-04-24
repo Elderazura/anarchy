@@ -1,16 +1,17 @@
 import { useRef } from "react";
 import { motion } from "framer-motion";
+import GlitchText from "./ui/GlitchText";
 import "./works.css";
 
 const WORKS = [
-  { id: "squid", file: "Hanumankind – The Game Don't Stop _ Squid Game 2 _ Kalmi, Parimal Shais _ Netflix India.mp4", client: "Netflix India", title: "Hanumankind × Squid Game 2", category: "Music Video" },
-  { id: "toast", file: "Once upon a toast…we thought we had it all..mp4", client: "Original", title: "Once Upon A Toast", category: "Short Film" },
-  { id: "cult1", file: "cult AD 1.mp4", client: "Cult", title: "Cult — AD 01", category: "Brand" },
-  { id: "cult2", file: "cult AD 2.mp4", client: "Cult", title: "Cult — AD 02", category: "Brand" },
+  { id: "squid", file: "hanumankind.mp4", client: "Netflix India", title: "Hanumankind × Squid Game 2", category: "Music Video" },
+  { id: "toast", file: "toast.mp4", client: "Original", title: "Once Upon A Toast", category: "Short Film" },
+  { id: "cult1", file: "cult-ad-1.mp4", client: "Cult", title: "Cult — AD 01", category: "Brand" },
+  { id: "cult2", file: "cult-ad-2.mp4", client: "Cult", title: "Cult — AD 02", category: "Brand" },
   { id: "pubg", file: "pubg.mp4", client: "PUBG", title: "PUBG Cinematic", category: "Game" },
   { id: "ray", file: "ray.mp4", client: "Ray", title: "Ray", category: "Film" },
   { id: "solana", file: "solana.mp4", client: "Solana", title: "Solana", category: "Crypto" },
-  { id: "urban", file: "urban animal.mp4", client: "Urban Animal", title: "Urban Animal", category: "Brand" },
+  { id: "urban", file: "urban-animal.mp4", client: "Urban Animal", title: "Urban Animal", category: "Brand" },
 ];
 
 function formatIndex(n) {
@@ -48,8 +49,8 @@ function WorkCard({ work, index }) {
       {/* Framer Motion spring for hover scale */}
       <video
         ref={videoRef}
-        src={"/video/" + encodeURIComponent(work.file)}
-        preload="none"
+        src={"/video/" + work.file}
+        preload="metadata"
         muted
         loop
         playsInline
@@ -81,7 +82,7 @@ export default function WorksGrid() {
     <section className="vault-section">
       <div className="vault-header">
         <p className="vault-header__eyebrow">01 / WORKS</p>
-        <h2 className="vault-header__title">The Vault</h2>
+        <GlitchText as="h2" className="vault-header__title">The Vault</GlitchText>
         <p className="vault-header__tagline">Eight worlds. One studio.</p>
         <span className="vault-scroll-hint" aria-hidden="true">← scroll →</span>
       </div>
