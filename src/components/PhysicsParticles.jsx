@@ -1,74 +1,104 @@
 import { useEffect, useRef } from "react";
 
-const COLORS = ["#7ec8e8", "#7ee8c0", "#a0c8ff", "#c8e8ff", "#5ab8d0"];
-const MAX_PARTICLES = 120;
-const GRAVITY = 0.032;
-const DAMPING = 0.994;
-const BOUNCE = 0.42;        // restitution on floor bounce
-const MOUSE_RADIUS = 100;
-const MOUSE_FORCE = 0.38;
+const MAX_PARTICLES = 280;
+const GRAVITY = 0.028;
+const DAMPING = 0.992;
+const BOUNCE = 0.5;
+const FLOOR_FRICTION = 0.88;
 
-function createParticle(vpW, vpH, scrollY) {
-  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+const ATTRACT_RADIUS = 150;
+const ATTRACT_FORCE = 0.15;
+const REPEL_RADIUS = 120;
+const REPEL_FORCE = 0.45;
+const BURST_SPEED_THRESHOLD = 8;
+const MODE_SWITCH_SPEED = 2;
+
+function getSpawnColor() {
+  const scrollFraction = window.scrollY / window.innerHeight;
+  if (scrollFraction < 1) return { h: 185 + Math.random() * 10, s: 70, l: 70 };
+  if (scrollFraction < 2) return { h: 35 + Math.random() * 10, s: 80, l: 65 };
+  if (scrollFraction < 3) return { h: 155 + Math.random() * 10, s: 70, l: 68 };
+  return { h: 200, s: 20, l: 80 };
+}
+
+function createEdgeParticle(vpW, vpH) {
+  const { h, s, l } = getSpawnColor();
   const typeRoll = Math.random();
-  const type = typeRoll < 0.05 ? "spark" : typeRoll < 0.15 ? "square" : "circle";
-  const radius = type === "spark" ? 1 : Math.random() * 4.2 + 0.4;
+  const type = typeRoll < 0.08 ? "spark" : typeRoll < 0.20 ? "diamond" : "circle";
+  const size = type === "spark" ? Math.random() * 5 + 3 : Math.random() * 4 + 0.8;
   const isFast = Math.random() < 0.12;
   const speed = isFast ? Math.random() * 1.4 + 0.8 : Math.random() * 0.35 + 0.05;
 
-  // Pick spawn edge: 0=top, 1=right, 2=bottom, 3=left
   const edge = Math.floor(Math.random() * 4);
-  let x, pageY, vx, vy;
-  const angle = (Math.random() - 0.5) * 0.9; // spread inward
+  let x, y, vx, vy;
+  const spread = (Math.random() - 0.5) * 0.9;
+
   if (edge === 0) {
     x = Math.random() * vpW;
-    pageY = scrollY + 0;
-    vx = Math.cos(angle) * speed * (Math.random() < 0.5 ? -1 : 1);
-    vy = Math.abs(Math.sin(angle)) * speed + 0.1;
+    y = 0;
+    vx = Math.cos(spread) * speed * (Math.random() < 0.5 ? -1 : 1);
+    vy = Math.abs(Math.sin(spread)) * speed + 0.1;
   } else if (edge === 1) {
     x = vpW;
-    pageY = scrollY + Math.random() * vpH;
+    y = Math.random() * vpH;
     vx = -speed;
     vy = (Math.random() - 0.5) * speed;
   } else if (edge === 2) {
     x = Math.random() * vpW;
-    pageY = scrollY + vpH;
+    y = vpH;
     vx = (Math.random() - 0.5) * speed;
     vy = -speed;
   } else {
     x = 0;
-    pageY = scrollY + Math.random() * vpH;
+    y = Math.random() * vpH;
     vx = speed;
     vy = (Math.random() - 0.5) * speed;
   }
 
   return {
-    x, pageY, vx, vy,
-    radius,
+    x, y, vx, vy,
+    h, s, l,
+    size,
     type,
-    color,
-    opacity: Math.random() * 0.52 + 0.08,
+    opacity: Math.random() * 0.52 + 0.1,
     life: 0,
     maxLife: Math.floor(Math.random() * 280 + 120),
-    sparkLen: type === "spark" ? Math.random() * 10 + 6 : 0,
+    trail: [],
+  };
+}
+
+function createBurstParticle(x, y, dirX, dirY, speed, vpW, vpH) {
+  const { h, s, l } = getSpawnColor();
+  const typeRoll = Math.random();
+  const type = typeRoll < 0.08 ? "spark" : typeRoll < 0.20 ? "diamond" : "circle";
+  const size = type === "spark" ? Math.random() * 5 + 3 : Math.random() * 3 + 1;
+
+  // Velocity roughly along cursor direction with spread
+  const baseSpeed = speed * (0.12 + Math.random() * 0.18);
+  const angle = Math.atan2(dirY, dirX) + (Math.random() - 0.5) * 1.2;
+  const vx = Math.cos(angle) * baseSpeed;
+  const vy = Math.sin(angle) * baseSpeed;
+
+  return {
+    x, y, vx, vy,
+    h, s, l,
+    size,
+    type,
+    opacity: Math.random() * 0.6 + 0.2,
+    life: 0,
+    maxLife: Math.floor(Math.random() * 160 + 80),
+    trail: [],
   };
 }
 
 export default function PhysicsParticles() {
   const canvasRef = useRef(null);
-  const stateRef = useRef({
-    particles: [],
-    mouse: { x: -9999, y: -9999 },
-    scrollY: 0,
-    lastSpawn: 0,
-    frameCount: 0,
-  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    const s = stateRef.current;
+
     let rafId;
     let vpW = window.innerWidth;
     let vpH = window.innerHeight;
@@ -81,134 +111,213 @@ export default function PhysicsParticles() {
     };
     resize();
 
-    // Seed initial particles
-    for (let i = 0; i < 40; i++) {
-      s.particles.push(createParticle(vpW, vpH, s.scrollY));
+    // Mouse state
+    let mouseX = 0, mouseY = 0;
+    let prevMouseX = 0, prevMouseY = 0;
+    let mouseVX = 0, mouseVY = 0;
+    let mouseSpeed = 0;
+    let mouseOnScreen = false;
+
+    const onMove = (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      mouseOnScreen = true;
+    };
+    const onLeave = () => { mouseOnScreen = false; };
+
+    window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mouseleave", onLeave);
+    window.addEventListener("resize", resize);
+
+    // Particle pool
+    const particles = [];
+    let frameCount = 0;
+    let lastEdgeSpawn = 0;
+
+    // Seed some initial particles
+    for (let i = 0; i < 50; i++) {
+      particles.push(createEdgeParticle(vpW, vpH));
     }
 
-    const onScroll = () => { s.scrollY = window.scrollY; };
-    const onMouseMove = (e) => { s.mouse.x = e.clientX; s.mouse.y = e.clientY; };
-    const onMouseLeave = () => { s.mouse.x = -9999; s.mouse.y = -9999; };
-    const onResize = () => resize();
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("mousemove", onMouseMove, { passive: true });
-    window.addEventListener("mouseleave", onMouseLeave);
-    window.addEventListener("resize", onResize);
-
-    // Detect section bottom edges for bouncing (sampled every 60 frames)
-    let sectionFloors = [];
-    const sampleFloors = () => {
-      sectionFloors = [];
-      const sections = document.querySelectorAll("section, .works-section, .content-section");
-      sections.forEach((el) => {
-        const rect = el.getBoundingClientRect();
-        sectionFloors.push(s.scrollY + rect.bottom); // absolute page Y of section bottom
-      });
+    const drawCircle = (p, screenY, alpha) => {
+      const grad = ctx.createRadialGradient(p.x, screenY, 0, p.x, screenY, p.size);
+      grad.addColorStop(0, `hsla(${p.h},${p.s}%,${p.l}%,${alpha * 0.9})`);
+      grad.addColorStop(1, `hsla(${p.h},${p.s}%,${p.l}%,0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(p.x, screenY, p.size, 0, Math.PI * 2);
+      ctx.fill();
     };
-    sampleFloors();
+
+    const drawDiamond = (p, screenY, alpha) => {
+      const sz = p.size * 1.5;
+      ctx.save();
+      ctx.translate(p.x, screenY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = `hsla(${p.h},${p.s}%,${p.l}%,${alpha})`;
+      ctx.fillRect(-sz / 2, -sz / 2, sz, sz);
+      ctx.restore();
+    };
+
+    const drawSpark = (p, screenY, alpha) => {
+      const ang = Math.atan2(p.vy, p.vx);
+      ctx.save();
+      ctx.translate(p.x, screenY);
+      ctx.rotate(ang);
+      ctx.lineCap = "round";
+      ctx.strokeStyle = `hsla(${p.h},${p.s}%,${p.l}%,${alpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(p.size, 0);
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    const drawTrail = (p, scrollY) => {
+      if (p.trail.length < 2) return;
+      if (p.type !== "circle" && p.type !== "diamond") return;
+
+      ctx.globalCompositeOperation = "source-over";
+      for (let t = 0; t < p.trail.length - 1; t++) {
+        const alpha = (t / p.trail.length) * 0.12;
+        const screenTY0 = p.trail[t].y - scrollY;
+        const screenTY1 = p.trail[t + 1].y - scrollY;
+        ctx.strokeStyle = `hsla(${p.h},${p.s}%,${p.l}%,${alpha})`;
+        ctx.lineWidth = p.size * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(p.trail[t].x, screenTY0);
+        ctx.lineTo(p.trail[t + 1].x, screenTY1);
+        ctx.stroke();
+      }
+      ctx.globalCompositeOperation = "lighter";
+    };
 
     const tick = () => {
       rafId = requestAnimationFrame(tick);
-      s.frameCount++;
-      ctx.clearRect(0, 0, vpW, vpH);
+      frameCount++;
 
-      // Resample section floors every 60 frames
-      if (s.frameCount % 60 === 0) sampleFloors();
+      const scrollY = window.scrollY;
 
-      // Spawn new particle every 3 frames if under max
-      if (s.frameCount - s.lastSpawn > 3 && s.particles.length < MAX_PARTICLES) {
-        s.particles.push(createParticle(vpW, vpH, s.scrollY));
-        s.lastSpawn = s.frameCount;
+      // Update mouse velocity
+      mouseVX = mouseX - prevMouseX;
+      mouseVY = mouseY - prevMouseY;
+      mouseSpeed = Math.sqrt(mouseVX * mouseVX + mouseVY * mouseVY);
+      prevMouseX = mouseX;
+      prevMouseY = mouseY;
+
+      // Spawn edge particles every 4 frames
+      if (frameCount - lastEdgeSpawn >= 4 && particles.length < MAX_PARTICLES) {
+        particles.push(createEdgeParticle(vpW, vpH));
+        lastEdgeSpawn = frameCount;
       }
 
-      const alive = [];
-      for (const p of s.particles) {
+      // Cursor burst spawn when speed > threshold
+      if (mouseOnScreen && mouseSpeed > BURST_SPEED_THRESHOLD && particles.length < MAX_PARTICLES) {
+        const count = Math.floor(Math.random() * 3) + 3; // 3–5
+        for (let b = 0; b < count && particles.length < MAX_PARTICLES; b++) {
+          particles.push(createBurstParticle(mouseX, mouseY + scrollY, mouseVX, mouseVY, mouseSpeed, vpW, vpH));
+        }
+      }
+
+      ctx.clearRect(0, 0, vpW, vpH);
+      ctx.globalCompositeOperation = "lighter";
+
+      const isAttract = mouseOnScreen && mouseSpeed < MODE_SWITCH_SPEED;
+
+      let i = particles.length;
+      while (i--) {
+        const p = particles[i];
         p.life++;
-        if (p.life > p.maxLife) continue; // dead — don't keep
+
+        if (p.life > p.maxLife) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        // Record trail (absolute page coords)
+        p.trail.push({ x: p.x, y: p.y });
+        if (p.trail.length > 4) p.trail.shift();
 
         // Gravity
         p.vy += GRAVITY;
+
         // Air damping
         p.vx *= DAMPING;
         p.vy *= DAMPING;
 
-        // Mouse repulsion
-        const drawY = p.pageY - s.scrollY;
-        const dx = p.x - s.mouse.x;
-        const dy = drawY - s.mouse.y;
-        const distMouse = Math.sqrt(dx * dx + dy * dy);
-        if (distMouse < MOUSE_RADIUS && distMouse > 0.1) {
-          const force = (MOUSE_RADIUS - distMouse) / MOUSE_RADIUS * MOUSE_FORCE;
-          p.vx += (dx / distMouse) * force;
-          p.vy += (dy / distMouse) * force;
-        }
+        // Mouse interaction
+        if (mouseOnScreen) {
+          const screenY = p.y - scrollY;
+          const dx = p.x - mouseX;
+          const dy = screenY - mouseY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
 
-        // Move
-        p.x += p.vx;
-        p.pageY += p.vy;
-
-        // Viewport floor bounce
-        const vpFloor = s.scrollY + vpH - 10;
-        if (p.pageY > vpFloor) {
-          p.pageY = vpFloor;
-          p.vy = -Math.abs(p.vy) * BOUNCE;
-          p.vx *= 0.88;
-        }
-
-        // Section floor bouncing
-        for (const floor of sectionFloors) {
-          if (p.pageY > floor - 4 && p.pageY < floor + 8 && p.vy > 0) {
-            p.pageY = floor - 4;
-            p.vy = -Math.abs(p.vy) * BOUNCE;
-            p.vx *= 0.9;
-            break;
+          if (isAttract) {
+            if (dist < ATTRACT_RADIUS && dist > 0.1) {
+              const force = (ATTRACT_RADIUS - dist) / ATTRACT_RADIUS * ATTRACT_FORCE;
+              // Attract: push toward cursor (negative direction)
+              p.vx -= (dx / dist) * force;
+              p.vy -= (dy / dist) * force;
+            }
+          } else {
+            if (dist < REPEL_RADIUS && dist > 0.1) {
+              const force = (REPEL_RADIUS - dist) / REPEL_RADIUS * REPEL_FORCE;
+              p.vx += (dx / dist) * force;
+              p.vy += (dy / dist) * force;
+            }
           }
+        }
+
+        // Move (y in page coords)
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Floor bounce (viewport bottom in page coords)
+        const vpFloor = scrollY + vpH - 10;
+        if (p.y > vpFloor) {
+          p.y = vpFloor;
+          p.vy = -Math.abs(p.vy) * BOUNCE;
+          p.vx *= FLOOR_FRICTION;
         }
 
         // Horizontal wrap
-        if (p.x < -p.radius) p.x = vpW + p.radius;
-        if (p.x > vpW + p.radius) p.x = -p.radius;
+        if (p.x < -p.size) p.x = vpW + p.size;
+        if (p.x > vpW + p.size) p.x = -p.size;
 
-        // Draw — only if in viewport
-        const screenY = p.pageY - s.scrollY;
-        if (screenY > -p.radius * 2 && screenY < vpH + p.radius * 2) {
-          const alpha = p.opacity * Math.min(1, p.life / 20) * Math.min(1, (p.maxLife - p.life) / 30);
-          ctx.globalAlpha = alpha;
-          ctx.fillStyle = p.color;
+        // Only draw if in viewport
+        const screenY = p.y - scrollY;
+        if (screenY < -p.size * 2 || screenY > vpH + p.size * 2) continue;
 
-          if (p.type === "spark") {
-            ctx.save();
-            ctx.translate(p.x, screenY);
-            const ang = Math.atan2(p.vy, p.vx) + Math.PI / 2;
-            ctx.rotate(ang);
-            ctx.fillRect(-1, -p.sparkLen / 2, 2, p.sparkLen);
-            ctx.restore();
-          } else if (p.type === "square") {
-            const sz = p.radius * 1.6;
-            ctx.fillRect(p.x - sz / 2, screenY - sz / 2, sz, sz);
-          } else {
-            ctx.beginPath();
-            ctx.arc(p.x, screenY, p.radius, 0, Math.PI * 2);
-            ctx.fill();
-          }
+        const lifeFade = Math.min(1, p.life / 20) * Math.min(1, (p.maxLife - p.life) / 30);
+        const alpha = p.opacity * lifeFade;
+
+        // Draw trail (switches composite op internally)
+        drawTrail(p, scrollY);
+
+        // Draw particle with additive blending
+        ctx.globalCompositeOperation = "lighter";
+
+        if (p.type === "circle") {
+          drawCircle(p, screenY, alpha);
+        } else if (p.type === "diamond") {
+          drawDiamond(p, screenY, alpha);
+        } else {
+          drawSpark(p, screenY, alpha);
         }
-
-        alive.push(p);
       }
 
+      ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = 1;
-      s.particles = alive;
     };
 
     tick();
 
     return () => {
       cancelAnimationFrame(rafId);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseleave", onMouseLeave);
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseleave", onLeave);
+      window.removeEventListener("resize", resize);
     };
   }, []);
 
@@ -218,9 +327,10 @@ export default function PhysicsParticles() {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 3,
+        width: "100%",
+        height: "100%",
         pointerEvents: "none",
-        display: "block",
+        zIndex: 5,
       }}
     />
   );

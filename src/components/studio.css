@@ -1,0 +1,218 @@
+/* ─── The Mind — Studio Section ─────────────────────────────────────────── */
+
+.mind-section {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  background: var(--color-bg, #04070d);
+}
+
+/* ─── Part 1: Opening Manifesto ─────────────────────────────────────────── */
+
+.mind-manifesto {
+  position: relative;
+  padding: 100px 80px 80px;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.mind-manifesto__label {
+  position: absolute;
+  top: 80px;
+  left: 80px;
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.55rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(126, 200, 232, 0.4);
+  margin: 0;
+}
+
+.mind-manifesto-headline {
+  font-family: var(--font-display, "Didot", "Bodoni MT", "Times New Roman", serif);
+  font-size: clamp(3.2rem, 8vw, 7.5rem);
+  font-weight: normal;
+  line-height: 0.9;
+  color: #f0f6ff;
+  margin: 0;
+  max-width: 60%;
+  position: relative;
+  z-index: 1;
+}
+
+.mind-manifesto-aside {
+  position: absolute;
+  top: 80px;
+  right: 80px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mind-manifesto-aside__label {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0;
+}
+
+.mind-manifesto-aside__year {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 3rem;
+  font-weight: normal;
+  color: rgba(126, 200, 232, 0.55);
+  line-height: 1;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.mind-manifesto-aside__bio {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.32);
+  margin: 8px 0 0;
+}
+
+/* ─── Part 2: Stats Bar ──────────────────────────────────────────────────── */
+
+.mind-stats {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 48px 80px;
+  gap: 24px;
+}
+
+.mind-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.mind-stat-number {
+  font-family: var(--font-display, "Didot", "Bodoni MT", "Times New Roman", serif);
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  font-weight: normal;
+  color: #7ec8e8;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.mind-stat-label {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 8px;
+}
+
+/* ─── Part 3: Ethos Statement ────────────────────────────────────────────── */
+
+.mind-ethos {
+  padding: 120px 80px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.mind-ethos__headline {
+  font-family: var(--font-display, "Didot", "Bodoni MT", "Times New Roman", serif);
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: normal;
+  color: #f0f6ff;
+  margin: 0;
+  line-height: 1.05;
+}
+
+.mind-ethos__body {
+  max-width: 60ch;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+
+/* ─── Part 4: Capabilities Row ───────────────────────────────────────────── */
+
+.mind-capabilities {
+  background: rgba(126, 200, 232, 0.03);
+  padding: 48px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mind-capabilities__label {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.52rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.22);
+  margin: 0;
+}
+
+.mind-capabilities__list {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 2;
+  margin: 0;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 780px) {
+  .mind-manifesto {
+    padding: 80px 20px 40px;
+    min-height: auto;
+  }
+
+  .mind-manifesto__label {
+    top: 40px;
+    left: 20px;
+  }
+
+  .mind-manifesto-headline {
+    max-width: 100%;
+    font-size: clamp(2.4rem, 10vw, 3.8rem);
+    margin-top: 32px;
+  }
+
+  .mind-manifesto-aside {
+    display: none;
+  }
+
+  .mind-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    padding: 40px 20px;
+    gap: 36px 24px;
+    justify-content: unset;
+  }
+
+  .mind-ethos {
+    padding: 60px 20px;
+    gap: 24px;
+  }
+
+  .mind-capabilities {
+    padding: 40px 20px;
+  }
+}

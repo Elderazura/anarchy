@@ -1,0 +1,205 @@
+/* ============================================================
+   The Arsenal — services.css
+   All class names prefixed: arsenal-
+   ============================================================ */
+
+/* ── Section wrapper ─────────────────────────────────────── */
+.arsenal-section {
+  width: 100%;
+  background: var(--color-bg, #04070d);
+}
+
+/* ── Section header ─────────────────────────────────────── */
+.arsenal-header {
+  padding: 80px 80px 60px;
+}
+
+.arsenal-header__label {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0 0 24px;
+}
+
+.arsenal-header__title {
+  font-family: var(--font-display, "Didot", "Bodoni MT", "Times New Roman", serif);
+  font-size: clamp(3rem, 7vw, 6rem);
+  color: #ffffff;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  margin: 0 0 20px;
+  font-weight: 400;
+}
+
+.arsenal-header__tagline {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* ── Individual zone ─────────────────────────────────────── */
+.arsenal-zone {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(60px, 10vh, 120px) clamp(40px, 8vw, 120px);
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ── Zone service number ─────────────────────────────────── */
+.arsenal-zone-num {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.55rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin: 0 0 32px;
+  /* color set inline via style prop */
+}
+
+/* ── Zone service name (hero element) ───────────────────── */
+.arsenal-zone-name {
+  font-family: var(--font-display, "Didot", "Bodoni MT", "Times New Roman", serif);
+  font-size: clamp(4rem, 11vw, 10rem);
+  line-height: 0.85;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  font-weight: 400;
+  margin: 0 0 24px;
+  position: relative;
+  z-index: 1;
+  cursor: default;
+  /* max-width so it doesn't bleed into the description column */
+  max-width: 65%;
+}
+
+/* ── Tagline ─────────────────────────────────────────────── */
+.arsenal-zone-tagline {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+  /* color set inline via style prop */
+}
+
+/* ── Description (absolute on desktop) ──────────────────── */
+.arsenal-zone-desc {
+  position: absolute;
+  right: clamp(40px, 8vw, 120px);
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 38ch;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+  z-index: 1;
+}
+
+/* ── Icon (bottom-left) ──────────────────────────────────── */
+.arsenal-zone-icon {
+  position: absolute;
+  bottom: clamp(40px, 6vh, 80px);
+  left: clamp(40px, 8vw, 120px);
+  z-index: 1;
+}
+
+/* ── Background effects per zone ────────────────────────── */
+
+/* Zone 01 — left-edge vertical glow line */
+.arsenal-zone-bg-01::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: #7ec8e8;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+/* Zone 02 — diagonal stripe, subtle orange tint */
+.arsenal-zone-bg-02::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    45deg,
+    rgba(255, 107, 53, 0.03) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 107, 53, 0.03) 50%,
+    rgba(255, 107, 53, 0.03) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/* Zone 03 — radial gradient bottom-left, green */
+.arsenal-zone-bg-03::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 60% at 0% 100%,
+    rgba(126, 232, 192, 0.05) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Zone 04 — scanlines */
+.arsenal-zone-bg-04::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(255, 255, 255, 0.02) 3px,
+    rgba(255, 255, 255, 0.02) 4px
+  );
+  pointer-events: none;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 780px) {
+  .arsenal-header {
+    padding: 60px 20px 40px;
+  }
+
+  .arsenal-zone {
+    min-height: 70vh;
+    padding: clamp(48px, 8vh, 80px) 20px;
+    /* leave extra bottom room for icon */
+    padding-bottom: 80px;
+  }
+
+  .arsenal-zone-name {
+    font-size: clamp(2.5rem, 10vw, 4rem);
+    max-width: 100%;
+  }
+
+  .arsenal-zone-desc {
+    position: static;
+    transform: none;
+    max-width: 100%;
+    font-size: 0.82rem;
+    margin-top: 28px;
+  }
+}

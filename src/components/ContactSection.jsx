@@ -1,38 +1,77 @@
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import "./contact.css";
+
+function AnimatedHeadline({ text, color = "#ffffff", delay = 0 }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <div ref={ref} style={{ display: "block" }}>
+      {text.split("").map((char, i) => (
+        <motion.span
+          key={i}
+          style={{
+            display: "inline-block",
+            color,
+            whiteSpace: char === " " ? "pre" : "normal",
+          }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{
+            delay: delay + i * 0.04,
+            duration: 0.5,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+        >
+          {char === " " ? "\u00a0" : char}
+        </motion.span>
+      ))}
+    </div>
+  );
+}
 
 export default function ContactSection() {
+  const emailRef = useRef(null);
+  const emailInView = useInView(emailRef, { once: true, margin: "-100px" });
+
   return (
-    <>
-      <style>{`
-        .contact-section { background: linear-gradient(180deg, transparent, rgba(4,7,13,0.98)); padding: 80px 22px 60px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .contact-heading { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; color: #e8f4fc; margin: 0 0 16px; line-height: 1.2; }
-        .contact-heading em { font-style: italic; color: #7ee8c0; }
-        .contact-sub { font-size: 0.9rem; color: #6a8898; max-width: 440px; line-height: 1.7; margin: 0 0 32px; }
-        .contact-email { font-size: 1.4rem; color: #7ee8c0; text-decoration: none; font-weight: 500; transition: text-decoration 180ms ease; }
-        .contact-email:hover { text-decoration: underline; }
-        .contact-socials { display: flex; flex-direction: row; gap: 24px; margin-top: 28px; }
-        .contact-social-link { font-size: 0.75rem; color: #6a8898; text-decoration: none; transition: color 180ms ease; }
-        .contact-social-link:hover { color: #a0c8d8; }
-        .contact-footer { font-size: 0.65rem; color: #3a5060; margin-top: 40px; text-align: center; }
-      `}</style>
-      <motion.section
-        className="contact-section"
-        initial={{ opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <p className="section-kicker">Get In Touch</p>
-        <h2 className="contact-heading">Ready to make something <em>wild</em>?</h2>
-        <p className="contact-sub">We take on select projects. Reach out and let's see if we're the right chaos for your brand.</p>
-        <a href="mailto:hello@anarchystudios.io" className="contact-email">hello@anarchystudios.io</a>
-        <div className="contact-socials">
-          <a href="#" className="contact-social-link">Twitter / X</a>
-          <a href="#" className="contact-social-link">Instagram</a>
-          <a href="#" className="contact-social-link">Behance</a>
-        </div>
-        <p className="contact-footer">© 2026 Anarchy Studios. All rights reserved.</p>
-      </motion.section>
-    </>
+    <section className="signal-section">
+      {/* Background layers */}
+      <div className="signal-bg-scanlines" aria-hidden="true" />
+      <div className="signal-bg-glow" aria-hidden="true" />
+
+      {/* Main content */}
+      <div className="signal-content">
+        <p className="signal-label">04 / Contact</p>
+
+        <h2 className="signal-headline">
+          <AnimatedHeadline text="LET'S BUILD" color="#ffffff" delay={0} />
+          <AnimatedHeadline text="A WORLD" color="#7ec8e8" delay={0.15} />
+        </h2>
+
+        <motion.a
+          ref={emailRef}
+          href="mailto:hello@anarchystudios.io"
+          className="signal-email"
+          initial={{ opacity: 0, y: 20 }}
+          animate={emailInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.6, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          hello@anarchystudios.io
+        </motion.a>
+
+        <hr className="signal-divider" />
+
+        <nav className="signal-socials" aria-label="Social links">
+          <a href="#" className="signal-social-link">Instagram</a>
+          <a href="#" className="signal-social-link">Behance</a>
+          <a href="#" className="signal-social-link">LinkedIn</a>
+        </nav>
+      </div>
+
+      {/* Footer credit */}
+      <p className="signal-footer">© 2024 Anarchy Studios</p>
+    </section>
   );
 }

@@ -1,31 +1,50 @@
-import { Suspense, useCallback, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { AnimatePresence, motion } from "framer-motion";
 import Character from "./components/Character";
 import SiteBackgroundBot from "./components/SiteBackgroundBot";
 import World from "./components/World";
 import LoadingScreen from "./components/LoadingScreen";
-import ShowreelPlayer from "./components/ShowreelPlayer";
 import WorksGrid from "./components/WorksGrid";
 import ServicesGrid from "./components/ServicesGrid";
+import StudioSection from "./components/StudioSection";
 import ContactSection from "./components/ContactSection";
 import ShimmerButton from "./components/ui/ShimmerButton";
-import AnimatedGradientText from "./components/ui/AnimatedGradientText";
 import PhysicsParticles from "./components/PhysicsParticles";
 import ShaderBackground from "./components/ui/ShaderBackground";
 import GlitchText from "./components/ui/GlitchText";
-import ScrollRevealText from "./components/ui/ScrollRevealText";
+import { animationMap } from "./lib/animationMap";
+
+const SITE_BOT_ANIMS = [
+  "idle","walking","casual-walk","running","run-fast",
+  "boxing-practice","unsteady-walk","dead","arise","alert",
+  "agree-gesture","boom-dance","all-night-dance","skill-01","skill-03",
+];
 
 export default function App() {
   const [enteredSite, setEnteredSite] = useState(false);
   const [sitePage, setSitePage] = useState("home");
   const [sceneReady, setSceneReady] = useState(false);
+  const [botForeground, setBotForeground] = useState(false);
   const botPositionRef = useRef(new THREE.Vector3(0, -1.2, -2.1));
   const worksRef = useRef(null);
   const aboutRef = useRef(null);
   const servicesRef = useRef(null);
+
+  // Preload site bot animations during hero phase so transition is instant
+  useEffect(() => {
+    if (!sceneReady) return;
+    let i = 0;
+    const next = () => {
+      if (i >= SITE_BOT_ANIMS.length) return;
+      useGLTF.preload(animationMap[SITE_BOT_ANIMS[i++]]);
+      setTimeout(next, 200);
+    };
+    const t = setTimeout(next, 1500);
+    return () => clearTimeout(t);
+  }, [sceneReady]);
 
   const scrollToSection = useCallback((ref) => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -142,139 +161,87 @@ export default function App() {
             animate={{ opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] } }}
           >
             <PhysicsParticles />
-            <div className="site-background-layer">
-              <SiteBackgroundBot />
+
+            {/* Bot canvas — z-index lifts when bot enters foreground */}
+            <div
+              className="site-background-layer"
+              style={{ zIndex: botForeground ? 18 : 1 }}
+            >
+              <SiteBackgroundBot onForegroundChange={setBotForeground} />
             </div>
+
             <header className="site-nav">
               <div className="logo-badge">
                 <img src="/branding/anarchy-logo.png" alt="Anarchy Studios" />
               </div>
               <nav>
-                <button type="button" onClick={() => setSitePage("home")}>
+                <button type="button" onClick={() => { setSitePage("home"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
                   Home
                 </button>
-                <button type="button" onClick={() => sitePage === "home" ? scrollToSection(worksRef) : setSitePage("home")}>
+                <button type="button" onClick={() => { setSitePage("home"); setTimeout(() => scrollToSection(worksRef), 80); }}>
                   Work
                 </button>
-                <button type="button" onClick={() => sitePage === "home" ? scrollToSection(aboutRef) : setSitePage("home")}>
+                <button type="button" onClick={() => { setSitePage("home"); setTimeout(() => scrollToSection(aboutRef), 80); }}>
                   Studio
                 </button>
-                <button type="button" onClick={() => sitePage === "home" ? scrollToSection(servicesRef) : setSitePage("home")}>
+                <button type="button" onClick={() => { setSitePage("home"); setTimeout(() => scrollToSection(servicesRef), 80); }}>
                   Services
                 </button>
               </nav>
             </header>
 
-            {sitePage === "home" ? (
-              <>
-                <section ref={worksRef} className="works-section section-shell">
-                  <motion.div
-                    initial={{ opacity: 0, y: 32 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <article className="content-panel panel-hero">
-                      <span className="editorial-number">01 / Works</span>
-                      <p className="section-kicker">Watch The Showreel</p>
-                      <h1><GlitchText>Work across diverse clients, genres, and cinematic styles.</GlitchText></h1>
-                      <p>
-                        Explore campaigns, branded worlds, and experimental motion crafted for clients
-                        who want visual identity with edge.
-                      </p>
-                      <div className="panel-actions">
-                        <button
-                          type="button"
-                          className="section-cta"
-                          onClick={() => setSitePage("works")}
-                        >
-                          Enter works archive
-                        </button>
-                      </div>
-                    </article>
-                  </motion.div>
-                  <ShowreelPlayer />
-                </section>
+            <AnimatePresence mode="wait">
+              {sitePage === "home" ? (
+                <motion.div
+                  key="home"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* 01 — Works: The Vault */}
+                  <section ref={worksRef} className="section-shell">
+                    <WorksGrid />
+                  </section>
 
-                <div className="section-divider" />
+                  {/* 02 — Studio: The Mind */}
+                  <section ref={aboutRef} className="section-shell">
+                    <StudioSection />
+                  </section>
 
-                <section ref={aboutRef} className="content-section section-shell">
-                  <motion.div
-                    initial={{ opacity: 0, y: 32 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <article className="content-panel">
-                      <span className="editorial-number">02 / Studio</span>
-                      <p className="section-kicker">About The Studio</p>
-                      <h2><ScrollRevealText text="We are obsessively crazy about craft, timing, and visual rebellion." stagger={0.04} /></h2>
-                      <p>
-                        Small team. Heavy intent. We combine animation, VFX, and AI production to create
-                        work that feels alive, risky, and unmistakably original.
-                      </p>
-                      <div className="panel-actions">
-                        <button
-                          type="button"
-                          className="section-cta"
-                          onClick={() => setSitePage("studio")}
-                        >
-                          Meet the team
-                        </button>
-                      </div>
-                    </article>
-                  </motion.div>
-                </section>
+                  {/* 03 — Services: The Arsenal */}
+                  <section ref={servicesRef} className="section-shell">
+                    <ServicesGrid />
+                  </section>
 
-                <div className="section-divider" />
-
-                <section ref={servicesRef} className="content-section section-shell">
-                  <motion.div
-                    initial={{ opacity: 0, y: 32 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <article className="content-panel">
-                      <span className="editorial-number">03 / Services</span>
-                      <p className="section-kicker">What We Do</p>
-                      <h2><GlitchText>End-to-end visual pipelines from concept frames to final delivery.</GlitchText></h2>
-                      <p>
-                        Creative strategy, design direction, 3D environments, character animation, VFX,
-                        and AI-assisted workflows designed for speed without losing artistic quality.
-                      </p>
-                      <ServicesGrid />
-                    </article>
-                  </motion.div>
-                </section>
-
-                <ContactSection />
-              </>
-            ) : sitePage === "works" ? (
-              <section className="inside-page-placeholder content-section">
-                <p className="section-kicker">Works Archive</p>
-                <h2>All client projects</h2>
-                <WorksGrid />
-                <button type="button" className="section-cta" onClick={() => setSitePage("home")}>
-                  Back to home
-                </button>
-                <ContactSection />
-              </section>
-            ) : (
-              <section className="inside-page-placeholder content-section">
-                <p className="section-kicker">Studio Page</p>
-                <h2>
-                  Studio story, team profiles, and process breakdown will live here next.
-                </h2>
-                <p>
-                  This inside page shell is now wired. Next step can be building the full content layout.
-                </p>
-                <ContactSection />
-                <button type="button" className="section-cta" onClick={() => setSitePage("home")}>
-                  Back to home sections
-                </button>
-              </section>
-            )}
+                  {/* 04 — Contact: The Signal */}
+                  <ContactSection />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="works-archive"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  style={{ paddingTop: "80px" }}
+                >
+                  <div style={{ padding: "0 clamp(24px,8vw,120px) 40px", display: "flex", alignItems: "center", gap: 16 }}>
+                    <button
+                      type="button"
+                      className="section-cta"
+                      onClick={() => setSitePage("home")}
+                      style={{ marginTop: 0 }}
+                    >
+                      ← Back
+                    </button>
+                    <p className="section-kicker" style={{ margin: 0 }}>Full Works Archive</p>
+                  </div>
+                  <WorksGrid />
+                  <ContactSection />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.main>
         )}
       </AnimatePresence>

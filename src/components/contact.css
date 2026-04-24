@@ -1,0 +1,145 @@
+/* ─── Contact / "The Signal" ─────────────────────────────────────── */
+
+.signal-section {
+  min-height: 100vh;
+  background: #000;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: clamp(80px, 12vh, 160px) clamp(24px, 8vw, 120px);
+  overflow: hidden;
+}
+
+/* Scanline overlay */
+.signal-bg-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.015) 2px,
+    rgba(255, 255, 255, 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Radial glow */
+.signal-bg-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 40% at 50% 50%,
+    rgba(126, 200, 232, 0.06) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Content wrapper */
+.signal-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Section label */
+.signal-label {
+  font-family: "Courier New", monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.28em;
+  color: rgba(126, 200, 232, 0.3);
+  text-transform: uppercase;
+  margin: 0 0 48px;
+}
+
+/* Headline block */
+.signal-headline {
+  font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+  font-size: clamp(4rem, 12vw, 11rem);
+  line-height: 0.88;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* Email link */
+.signal-email {
+  display: inline-block;
+  font-family: "Courier New", monospace;
+  font-size: clamp(1rem, 3vw, 1.8rem);
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  margin-top: 48px;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.signal-email:hover {
+  color: #7ec8e8;
+  text-shadow: 0 0 20px rgba(126, 200, 232, 0.4);
+}
+
+/* Divider */
+.signal-divider {
+  width: 120px;
+  height: 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 48px auto;
+}
+
+/* Socials row */
+.signal-socials {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  justify-content: center;
+}
+
+.signal-social-link {
+  font-family: "Courier New", monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.signal-social-link:hover {
+  color: rgba(126, 200, 232, 0.7);
+}
+
+/* Footer credit */
+.signal-footer {
+  position: absolute;
+  bottom: 32px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: "Courier New", monospace;
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.12);
+  margin: 0;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────── */
+
+@media (max-width: 780px) {
+  .signal-section {
+    padding: clamp(60px, 10vh, 100px) clamp(20px, 6vw, 48px);
+  }
+
+  .signal-headline {
+    font-size: clamp(2.8rem, 12vw, 5rem);
+  }
+}

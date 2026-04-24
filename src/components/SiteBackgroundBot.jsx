@@ -93,8 +93,8 @@ const SCENES = [
 ];
 
 function pickScene(previousName, sceneCount, lastFgScene) {
-  const canDoFg = sceneCount - lastFgScene >= 3;
-  if (canDoFg && Math.random() < 0.15) {
+  const canDoFg = sceneCount - lastFgScene >= 2;
+  if (canDoFg && Math.random() < 0.28) {
     return SCENES.find((s) => s.name === "foreground-cross");
   }
   const eligible = SCENES.filter((s) => s.weight > 0 && s.name !== previousName);
@@ -123,7 +123,7 @@ function getZoneTarget(zone) {
   return { x: 0, z: -1.9 };
 }
 
-function BotActor() {
+function BotActor({ onForegroundChange }) {
   const group = useRef(null);
   const mixerRef = useRef(null);
   const actionRef = useRef(null);
@@ -212,12 +212,19 @@ function BotActor() {
     actionRef.current = action;
   }, []);
 
+  const isForegroundRef = useRef(false);
+
   const startBeat = useCallback((beat) => {
     beatTimerRef.current = 0;
     speedMultRef.current = 0.82 + Math.random() * 0.36;
     playClip(beat.clip);
     const root = group.current;
-    if (beat.zone === "foreground" && root) {
+    const entering = beat.zone === "foreground";
+    if (entering !== isForegroundRef.current) {
+      isForegroundRef.current = entering;
+      onForegroundChange?.(entering);
+    }
+    if (entering && root) {
       const fromRight = fgFromRightRef.current;
       root.position.set(fromRight ? 5.4 : -5.4, -1.2, -1.9);
       travelTargetRef.current.set(fromRight ? -5.4 : 5.4, -1.2, -1.9);
@@ -225,7 +232,7 @@ function BotActor() {
       const t = getZoneTarget(beat.zone);
       travelTargetRef.current.set(t.x, -1.2, t.z);
     }
-  }, [playClip]);
+  }, [playClip, onForegroundChange]);
 
   // Boot scene machine on mount (after a short delay so clips are ready)
   useEffect(() => {
@@ -422,13 +429,13 @@ function BotActor() {
   );
 }
 
-export default function SiteBackgroundBot() {
+export default function SiteBackgroundBot({ onForegroundChange }) {
   return (
     <Canvas camera={{ position: [0, 1.5, 7.8], fov: 36 }} shadows>
       <ambientLight intensity={0.28} />
       <hemisphereLight intensity={0.24} groundColor="#0a1216" />
       <directionalLight position={[5, 7, 5]} intensity={0.78} castShadow />
-      <BotActor />
+      <BotActor onForegroundChange={onForegroundChange} />
     </Canvas>
   );
 }

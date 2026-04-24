@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { motion } from "framer-motion";
+import "./works.css";
 
 const WORKS = [
   { id: "squid", file: "Hanumankind – The Game Don't Stop _ Squid Game 2 _ Kalmi, Parimal Shais _ Netflix India.mp4", client: "Netflix India", title: "Hanumankind × Squid Game 2", category: "Music Video" },
@@ -11,6 +12,10 @@ const WORKS = [
   { id: "solana", file: "solana.mp4", client: "Solana", title: "Solana", category: "Crypto" },
   { id: "urban", file: "urban animal.mp4", client: "Urban Animal", title: "Urban Animal", category: "Brand" },
 ];
+
+function formatIndex(n) {
+  return String(n + 1).padStart(2, "0");
+}
 
 function WorkCard({ work, index }) {
   const videoRef = useRef(null);
@@ -30,51 +35,62 @@ function WorkCard({ work, index }) {
 
   return (
     <motion.div
-      className="works-card"
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.06, duration: 0.5 }}
-      whileHover={{ scale: 1.02 }}
+      className="vault-card"
+      initial={{ opacity: 0, x: 40 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ delay: index * 0.08, duration: 0.5, ease: "easeOut" }}
+      whileHover={{ scale: 1.03 }}
+      style={{ originX: 0.5, originY: 0.5 }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
+      {/* Framer Motion spring for hover scale */}
       <video
         ref={videoRef}
         src={"/video/" + encodeURIComponent(work.file)}
-        preload="metadata"
+        preload="none"
         muted
         loop
         playsInline
-        className="works-card-video"
+        className="vault-card-video"
       />
-      <div className="works-card-overlay">
-        <span className="works-card-category">{work.category}</span>
-        <p className="works-card-client">{work.client}</p>
-        <p className="works-card-title">{work.title}</p>
+
+      {/* Letterbox bars */}
+      <div className="vault-letterbox" aria-hidden="true" />
+
+      {/* Gradient overlay + text */}
+      <div className="vault-card-overlay">
+        <div className="vault-card-meta">
+          <p className="vault-card-category">{work.category}</p>
+          <p className="vault-card-client">{work.client}</p>
+          <p className="vault-card-title">{work.title}</p>
+        </div>
       </div>
+
+      {/* Index number */}
+      <span className="vault-card-index" aria-hidden="true">
+        {formatIndex(index)}
+      </span>
     </motion.div>
   );
 }
 
 export default function WorksGrid() {
   return (
-    <>
-      <style>{`
-        .works-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; width: 100%; }
-        .works-card { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; background: #070f1a; border: 1px solid rgba(255,255,255,0.07); cursor: pointer; }
-        .works-card-video { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .works-card-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 50%); opacity: 0; transition: opacity 220ms ease; }
-        .works-card:hover .works-card-overlay { opacity: 1; }
-        .works-card-category { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #7ec8e8; margin-bottom: 4px; }
-        .works-card-client { font-size: 0.65rem; color: #89a8b8; margin: 0 0 2px; }
-        .works-card-title { font-size: 0.85rem; font-weight: 600; color: #e8f4fc; margin: 0; }
-      `}</style>
-      <div className="works-grid">
+    <section className="vault-section">
+      <div className="vault-header">
+        <p className="vault-header__eyebrow">01 / WORKS</p>
+        <h2 className="vault-header__title">The Vault</h2>
+        <p className="vault-header__tagline">Eight worlds. One studio.</p>
+        <span className="vault-scroll-hint" aria-hidden="true">← scroll →</span>
+      </div>
+
+      <div className="vault-ribbon">
         {WORKS.map((work, index) => (
           <WorkCard key={work.id} work={work} index={index} />
         ))}
       </div>
-    </>
+    </section>
   );
 }
