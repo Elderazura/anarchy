@@ -59,9 +59,9 @@ const viewportOpts = { once: true, margin: "-80px" };
 /* ─── Stats data ─────────────────────────────────────────────────────────── */
 
 const STATS = [
-  { target: 120, suffix: "+", label: "Projects Delivered" },
+  { target: 100, suffix: "+", label: "Projects Delivered" },
   { target: 2.4, suffix: "M+", label: "Frames Rendered", isDecimal: true },
-  { target: 14, suffix: "", label: "Countries" },
+  { target: 5, suffix: "", label: "Countries" },
   { target: 5, suffix: "+", label: "Years Active" },
 ];
 

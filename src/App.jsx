@@ -162,13 +162,18 @@ export default function App() {
           >
             <PhysicsParticles />
 
-            {/* Bot canvas — z-index lifts when bot enters foreground */}
-            <div
+            {/* Bot canvas — always above content (canvas is alpha-transparent) */}
+            <motion.div
               className="site-background-layer"
-              style={{ zIndex: botForeground ? 18 : 1 }}
+              animate={{
+                opacity: botForeground ? 1 : 0.82,
+                scale: botForeground ? 1.04 : 1,
+              }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              style={{ zIndex: 15 }}
             >
               <SiteBackgroundBot onForegroundChange={setBotForeground} />
-            </div>
+            </motion.div>
 
             <header className="site-nav">
               <div className="logo-badge">

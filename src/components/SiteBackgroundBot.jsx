@@ -431,7 +431,14 @@ function BotActor({ onForegroundChange }) {
 
 export default function SiteBackgroundBot({ onForegroundChange }) {
   return (
-    <Canvas camera={{ position: [0, 1.5, 7.8], fov: 36 }} shadows>
+    <Canvas
+      camera={{ position: [0, 1.5, 7.8], fov: 36 }}
+      shadows
+      gl={{ alpha: true, antialias: true }}
+      onCreated={({ gl }) => {
+        gl.setClearColor(0x000000, 0);
+      }}
+    >
       <ambientLight intensity={0.28} />
       <hemisphereLight intensity={0.24} groundColor="#0a1216" />
       <directionalLight position={[5, 7, 5]} intensity={0.78} castShadow />
