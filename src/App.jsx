@@ -10,12 +10,19 @@ import LoadingScreen from "./components/LoadingScreen";
 import WorksGrid from "./components/WorksGrid";
 import ServicesGrid from "./components/ServicesGrid";
 import StudioSection from "./components/StudioSection";
+import ReelStrip from "./components/ReelStrip";
 import ContactSection from "./components/ContactSection";
 import ShimmerButton from "./components/ui/ShimmerButton";
 import PhysicsParticles from "./components/PhysicsParticles";
 import ShaderBackground from "./components/ui/ShaderBackground";
 import GlitchText from "./components/ui/GlitchText";
 import { animationMap } from "./lib/animationMap";
+import { useBotPhysics } from "./lib/useBotPhysics";
+import StatsBanner from "./components/StatsBanner";
+import CtaBanner from "./components/CtaBanner";
+import StickyContact from "./components/StickyContact";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const SITE_BOT_ANIMS = [
   "idle","walking","casual-walk","running","run-fast",
@@ -24,6 +31,8 @@ const SITE_BOT_ANIMS = [
 ];
 
 export default function App() {
+  gsap.registerPlugin(ScrollTrigger);
+
   const [enteredSite, setEnteredSite] = useState(false);
   const [sitePage, setSitePage] = useState("home");
   const [sceneReady, setSceneReady] = useState(false);
@@ -32,6 +41,7 @@ export default function App() {
   const worksRef = useRef(null);
   const aboutRef = useRef(null);
   const servicesRef = useRef(null);
+  const { onBotUpdate, registerTarget } = useBotPhysics();
 
   // Preload site bot animations during hero phase so transition is instant
   useEffect(() => {
@@ -172,7 +182,7 @@ export default function App() {
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               style={{ zIndex: 15 }}
             >
-              <SiteBackgroundBot onForegroundChange={setBotForeground} />
+              <SiteBackgroundBot onForegroundChange={setBotForeground} onBotUpdate={onBotUpdate} />
             </motion.div>
 
             <header className="site-nav">
@@ -205,19 +215,30 @@ export default function App() {
                   transition={{ duration: 0.3 }}
                 >
                   {/* 01 — Works: The Vault */}
-                  <section ref={worksRef} className="section-shell">
+                  <section ref={(el) => { worksRef.current = el; registerTarget(el); }} className="section-shell">
                     <WorksGrid />
                   </section>
 
+                  <div className="section-divider" />
+                  <StatsBanner />
+                  <div className="section-divider" />
+
                   {/* 02 — Studio: The Mind */}
-                  <section ref={aboutRef} className="section-shell">
+                  <section ref={(el) => { aboutRef.current = el; registerTarget(el); }} className="section-shell">
                     <StudioSection />
                   </section>
 
+                  <div className="section-divider" />
+
+                  {/* 02b — Featured Reels (per-service project showcase) */}
+                  <ReelStrip />
+
                   {/* 03 — Services: The Arsenal */}
-                  <section ref={servicesRef} className="section-shell">
+                  <section ref={(el) => { servicesRef.current = el; registerTarget(el); }} className="section-shell">
                     <ServicesGrid />
                   </section>
+
+                  <CtaBanner />
 
                   {/* 04 — Contact: The Signal */}
                   <ContactSection />
@@ -247,6 +268,8 @@ export default function App() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            <StickyContact />
           </motion.main>
         )}
       </AnimatePresence>

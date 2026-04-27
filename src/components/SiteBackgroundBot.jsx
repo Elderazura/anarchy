@@ -92,38 +92,68 @@ const SCENES = [
   },
 ];
 
-function pickScene(previousName, sceneCount, lastFgScene) {
+// Which section is in view based on scroll position
+function getActiveSection(scrollY) {
+  const vh = window.innerHeight;
+  if (scrollY < vh * 1.8) return "works";
+  if (scrollY < vh * 3.6) return "studio";
+  if (scrollY < vh * 5.8) return "services";
+  return "contact";
+}
+
+// Per-section preferred scene names — shapes the weighted random draw
+const SECTION_SCENE_BIAS = {
+  works:    ["workout", "party", "scout"],       // energy, celebration, curiosity
+  studio:   ["patrol", "dance-far", "scout"],    // deliberate, contemplative
+  services: ["workout", "scout", "party"],       // power, performance
+  contact:  ["foreground-cross", "workout"],     // dramatic presence
+};
+
+function pickScene(previousName, sceneCount, lastFgScene, section = "works") {
+  // Contact zone cranks up foreground frequency for drama
+  const fgChance = section === "contact" ? 0.52 : 0.28;
   const canDoFg = sceneCount - lastFgScene >= 2;
-  if (canDoFg && Math.random() < 0.28) {
+  if (canDoFg && Math.random() < fgChance) {
     return SCENES.find((s) => s.name === "foreground-cross");
   }
+
+  const preferred = SECTION_SCENE_BIAS[section] ?? [];
   const eligible = SCENES.filter((s) => s.weight > 0 && s.name !== previousName);
-  const total = eligible.reduce((sum, s) => sum + s.weight, 0);
+
+  // Preferred scenes get 3× weight — still random, just biased
+  const total = eligible.reduce(
+    (sum, s) => sum + (preferred.includes(s.name) ? s.weight * 3 : s.weight),
+    0,
+  );
   let r = Math.random() * total;
   for (const scene of eligible) {
-    r -= scene.weight;
+    r -= preferred.includes(scene.name) ? scene.weight * 3 : scene.weight;
     if (r <= 0) return scene;
   }
   return eligible[0];
 }
 
-function getZoneTarget(zone) {
+// Zone targets shift per section so the bot migrates across the viewport
+function getZoneTarget(zone, section = "works") {
+  if (zone === "foreground") return { x: 0, z: -1.9 };
+
+  // Section-biased X offset keeps bot on the interesting side of the screen
+  const xBias = { works: 1.4, studio: -1.4, services: 0.6, contact: 0 }[section] ?? 0;
+
   if (zone === "far") {
     return {
-      x: THREE.MathUtils.randFloat(-3.2, 3.2),
+      x: THREE.MathUtils.randFloat(-2.8 + xBias, 2.8 + xBias),
       z: THREE.MathUtils.randFloat(-7.4, -5.2),
     };
   }
-  if (zone === "mid") {
-    return {
-      x: THREE.MathUtils.randFloat(-2.4, 2.4),
-      z: THREE.MathUtils.randFloat(-4.5, -3.0),
-    };
-  }
-  return { x: 0, z: -1.9 };
+  // mid
+  return {
+    x: THREE.MathUtils.randFloat(-2.0 + xBias, 2.0 + xBias),
+    z: THREE.MathUtils.randFloat(-4.5, -3.0),
+  };
 }
 
-function BotActor({ onForegroundChange }) {
+function BotActor({ onForegroundChange, onBotUpdate }) {
   const group = useRef(null);
   const mixerRef = useRef(null);
   const actionRef = useRef(null);
@@ -135,6 +165,10 @@ function BotActor({ onForegroundChange }) {
   const lastFgSceneRef = useRef(-999);
   const fgFromRightRef = useRef(true);
   const speedMultRef = useRef(1.0);
+
+  // Section awareness
+  const activeSectionRef = useRef("works");
+  const prevSectionRef = useRef("works");
 
   // Physics refs
   const physicsRef = useRef("scene");
@@ -229,7 +263,7 @@ function BotActor({ onForegroundChange }) {
       root.position.set(fromRight ? 5.4 : -5.4, -1.2, -1.9);
       travelTargetRef.current.set(fromRight ? -5.4 : 5.4, -1.2, -1.9);
     } else {
-      const t = getZoneTarget(beat.zone);
+      const t = getZoneTarget(beat.zone, activeSectionRef.current);
       travelTargetRef.current.set(t.x, -1.2, t.z);
     }
   }, [playClip, onForegroundChange]);
@@ -240,7 +274,7 @@ function BotActor({ onForegroundChange }) {
     if (!root) return;
     mixerRef.current = new THREE.AnimationMixer(root);
     const t = window.setTimeout(() => {
-      const scene = pickScene(null, 0, lastFgSceneRef.current);
+      const scene = pickScene(null, 0, lastFgSceneRef.current, activeSectionRef.current);
       sceneRef.current = scene;
       beatIndexRef.current = 0;
       sceneCountRef.current = 1;
@@ -249,10 +283,8 @@ function BotActor({ onForegroundChange }) {
     return () => window.clearTimeout(t);
   }, [startBeat]);
 
-  // Scroll physics listener
+  // Scroll listener — physics + section awareness
   useEffect(() => {
-    let fallDeadTimer = null;
-
     const onScroll = () => {
       const sy = window.scrollY;
       const vh = window.innerHeight;
@@ -260,8 +292,28 @@ function BotActor({ onForegroundChange }) {
       const ARISE_SCROLL = vh * 1.2;
       const RESET_SCROLL = vh * 0.2;
 
+      // ── Section change detection ────────────────────────────
+      const newSection = getActiveSection(sy);
+      if (newSection !== prevSectionRef.current) {
+        prevSectionRef.current = newSection;
+        activeSectionRef.current = newSection;
+
+        // On section boundary: if bot is in a safe stationary beat, nudge it to
+        // pick a new section-appropriate scene on its next transition. We do this
+        // by reducing the remaining beat timer so it transitions sooner.
+        if (physicsRef.current === "scene" && sceneRef.current) {
+          const beat = sceneRef.current.beats[beatIndexRef.current];
+          // Only interrupt stationary beats (not walking/running)
+          if (beat && beat.speed === 0 && beatTimerRef.current > 0.8) {
+            beatTimerRef.current = beat.duration - 0.4; // expire in 0.4s
+          }
+        }
+      } else {
+        activeSectionRef.current = newSection;
+      }
+
+      // ── Physics: scroll-driven fall/arise ──────────────────
       if (sy < RESET_SCROLL && (fallTriggeredRef.current || ariseTriggeredRef.current)) {
-        if (fallDeadTimer) { window.clearTimeout(fallDeadTimer); fallDeadTimer = null; }
         fallTriggeredRef.current = false;
         ariseTriggeredRef.current = false;
         fallVelocityRef.current = 0;
@@ -273,8 +325,7 @@ function BotActor({ onForegroundChange }) {
           root.rotation.z = 0;
           root.rotation.x = 0;
         }
-        // Restart scene machine fresh
-        const scene = pickScene(null, sceneCountRef.current, lastFgSceneRef.current);
+        const scene = pickScene(null, sceneCountRef.current, lastFgSceneRef.current, activeSectionRef.current);
         sceneRef.current = scene;
         beatIndexRef.current = 0;
         sceneCountRef.current++;
@@ -303,9 +354,7 @@ function BotActor({ onForegroundChange }) {
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, [startBeat]);
 
   useFrame((state, delta) => {
@@ -395,13 +444,23 @@ function BotActor({ onForegroundChange }) {
         if (scene.isForeground) fgFromRightRef.current = !fgFromRightRef.current;
         const prevName = scene.name;
         sceneCountRef.current++;
-        const next = pickScene(prevName, sceneCountRef.current, lastFgSceneRef.current);
+        const next = pickScene(prevName, sceneCountRef.current, lastFgSceneRef.current, activeSectionRef.current);
         if (next.isForeground) lastFgSceneRef.current = sceneCountRef.current;
         sceneRef.current = next;
         beatIndexRef.current = 0;
         startBeat(next.beats[0]);
       }
       return;
+    }
+
+    // Broadcast screen position + current clip for DOM physics
+    if (onBotUpdate && root) {
+      const pos = root.position.clone();
+      pos.project(state.camera);
+      const sx = (pos.x * 0.5 + 0.5) * window.innerWidth;
+      const sy = (-pos.y * 0.5 + 0.5) * window.innerHeight + window.scrollY;
+      const currentClip = sceneRef.current?.beats[beatIndexRef.current]?.clip ?? "idle";
+      onBotUpdate(sx, sy, currentClip);
     }
 
     // Movement
@@ -416,8 +475,9 @@ function BotActor({ onForegroundChange }) {
         root.rotation.y = THREE.MathUtils.lerp(root.rotation.y, yaw, 0.09);
       }
     } else {
-      // Stationary: face camera
-      root.rotation.y = THREE.MathUtils.lerp(root.rotation.y, 0, 0.04);
+      // Stationary: face slightly toward section's focal side, not dead-center
+      const facingBias = { works: -0.18, studio: 0.18, services: -0.08, contact: 0 }[activeSectionRef.current] ?? 0;
+      root.rotation.y = THREE.MathUtils.lerp(root.rotation.y, facingBias, 0.04);
       root.position.y = -1.2 + Math.sin(state.clock.elapsedTime * 0.7) * 0.018;
     }
   });
@@ -429,7 +489,7 @@ function BotActor({ onForegroundChange }) {
   );
 }
 
-export default function SiteBackgroundBot({ onForegroundChange }) {
+export default function SiteBackgroundBot({ onForegroundChange, onBotUpdate }) {
   return (
     <Canvas
       camera={{ position: [0, 1.5, 7.8], fov: 36 }}
@@ -442,7 +502,7 @@ export default function SiteBackgroundBot({ onForegroundChange }) {
       <ambientLight intensity={0.28} />
       <hemisphereLight intensity={0.24} groundColor="#0a1216" />
       <directionalLight position={[5, 7, 5]} intensity={0.78} castShadow />
-      <BotActor onForegroundChange={onForegroundChange} />
+      <BotActor onForegroundChange={onForegroundChange} onBotUpdate={onBotUpdate} />
     </Canvas>
   );
 }

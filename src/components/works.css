@@ -4,51 +4,53 @@
   width: 100%;
   background: var(--color-bg, #04070d);
   overflow: hidden;
+  padding-bottom: 40px;
 }
 
-/* ─── Section Header ─────────────────────────────────────────────────────── */
+/* ─── Section Header — compact inline row ────────────────────────────────── */
 
 .vault-header {
-  padding: 80px 80px 24px;
-  position: relative;
+  padding: 48px clamp(24px, 5vw, 80px) 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
 }
 
 .vault-header__eyebrow {
   font-family: var(--font-mono, "Courier New", monospace);
-  font-size: 0.55rem;
-  letter-spacing: 0.28em;
+  font-size: 0.5rem;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: rgba(126, 200, 232, 0.4);
-  margin: 0 0 16px;
+  color: rgba(126, 200, 232, 0.35);
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .vault-header__title {
   font-family: var(--font-display, "Didot", "Bodoni MT", "Times New Roman", serif);
-  font-size: clamp(3.5rem, 8vw, 7rem);
+  font-size: clamp(1.8rem, 3.8vw, 3.2rem);
   font-weight: normal;
   color: #ffffff;
-  line-height: 0.88;
-  margin: 0 0 20px;
+  line-height: 1;
+  margin: 0;
 }
 
 .vault-header__tagline {
   font-family: var(--font-mono, "Courier New", monospace);
-  font-size: 0.6rem;
+  font-size: 0.5rem;
   letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.2);
   margin: 0;
+  margin-left: auto;
 }
 
 .vault-scroll-hint {
-  position: absolute;
-  bottom: 24px;
-  right: 80px;
   font-family: var(--font-mono, "Courier New", monospace);
-  font-size: 0.5rem;
+  font-size: 0.48rem;
   letter-spacing: 0.16em;
-  color: rgba(255, 255, 255, 0.3);
-  opacity: 0.3;
+  color: rgba(255, 255, 255, 0.22);
   user-select: none;
+  flex-shrink: 0;
 }
 
 /* ─── Horizontal Ribbon ──────────────────────────────────────────────────── */
@@ -56,11 +58,10 @@
 .vault-ribbon {
   display: flex;
   flex-direction: row;
-  gap: 3px;
+  gap: 2px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0 80px;
-  padding-bottom: 48px;
+  padding: 12px clamp(24px, 5vw, 80px) 0;
   cursor: grab;
 }
 
@@ -76,42 +77,16 @@
   scrollbar-width: none;
 }
 
-/* ─── Individual Card ────────────────────────────────────────────────────── */
+/* ─── Individual Card — landscape cinematic ──────────────────────────────── */
 
 .vault-card {
   position: relative;
-  flex: 0 0 340px;
-  width: 340px;
-  height: 520px;
-  background: #000000;
+  flex: 0 0 320px;
+  width: 320px;
+  height: 210px;
+  background: #000;
   overflow: hidden;
   cursor: pointer;
-}
-
-/* Letterbox bars — cinematic 2.35:1 feel */
-.vault-letterbox {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.vault-letterbox::before,
-.vault-letterbox::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 8%;
-  background: #000000;
-}
-
-.vault-letterbox::before {
-  top: 0;
-}
-
-.vault-letterbox::after {
-  bottom: 0;
 }
 
 /* Video */
@@ -123,115 +98,131 @@
   object-fit: cover;
   display: block;
   z-index: 0;
+  transition: transform 0.5s ease, opacity 0.4s ease;
+  opacity: 0.72;
 }
 
-/* Gradient overlay — always visible */
+.vault-card:hover .vault-card-video {
+  transform: scale(1.04);
+  opacity: 1;
+}
+
+/* Gradient overlay */
 .vault-card-overlay {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 2;
   background: linear-gradient(
-    to bottom,
-    transparent 40%,
-    rgba(0, 0, 0, 0.92) 100%
+    160deg,
+    transparent 30%,
+    rgba(0, 0, 0, 0.85) 100%
   );
-  transition: background 0.35s ease;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 28px 24px;
-}
-
-.vault-card:hover .vault-card-overlay {
-  background: linear-gradient(
-    to bottom,
-    transparent 20%,
-    rgba(0, 0, 0, 0.92) 85%
-  );
-}
-
-/* Index number — top right */
-.vault-card-index {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 4;
-  font-family: var(--font-mono, "Courier New", monospace);
-  font-size: 0.5rem;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.3);
-  opacity: 0.3;
-  user-select: none;
+  padding: 16px 18px;
 }
 
 /* Meta text block */
 .vault-card-meta {
   position: relative;
-  z-index: 4;
+  z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  transform: translateY(4px);
+  transition: transform 0.3s ease;
+}
+
+.vault-card:hover .vault-card-meta {
+  transform: translateY(0);
 }
 
 .vault-card-category {
   font-family: var(--font-mono, "Courier New", monospace);
-  font-size: 0.55rem;
-  letter-spacing: 0.24em;
+  font-size: 0.46rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(126, 200, 232, 0.6);
+  color: rgba(126, 200, 232, 0.55);
   margin: 0;
 }
 
 .vault-card-client {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.4);
   margin: 0;
   font-family: inherit;
+  display: none;
+}
+
+.vault-card:hover .vault-card-client {
+  display: block;
 }
 
 .vault-card-title {
   font-family: var(--font-display, "Didot", "Bodoni MT", "Times New Roman", serif);
-  font-size: 1.6rem;
+  font-size: 1.05rem;
   font-weight: normal;
-  line-height: 1.0;
+  line-height: 1.1;
   color: #ffffff;
   margin: 0;
-  transition: font-size 0.25s ease, transform 0.25s ease;
 }
 
-.vault-card:hover .vault-card-title {
-  font-size: 1.7rem;
-  transform: translateY(-8px);
+/* Index number — top left */
+.vault-card-index {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 4;
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.44rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.22);
+  user-select: none;
+}
+
+/* Thin accent line on hover — left edge */
+.vault-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 0;
+  background: rgba(126, 200, 232, 0.7);
+  z-index: 5;
+  transition: height 0.35s ease;
+}
+
+.vault-card:hover::before {
+  height: 100%;
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 780px) {
   .vault-header {
-    padding: 40px 20px 20px;
+    padding: 32px 20px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
+  .vault-header__tagline,
   .vault-scroll-hint {
-    right: 20px;
-    bottom: 20px;
+    display: none;
   }
 
   .vault-ribbon {
-    padding: 0 20px;
-    padding-bottom: 36px;
+    padding: 8px 20px 0;
   }
 
   .vault-card {
     flex: 0 0 260px;
     width: 260px;
-    height: 400px;
+    height: 170px;
   }
 
   .vault-card-title {
-    font-size: 1.3rem;
-  }
-
-  .vault-card:hover .vault-card-title {
-    font-size: 1.4rem;
+    font-size: 0.9rem;
   }
 }

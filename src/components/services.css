@@ -203,3 +203,66 @@
     margin-top: 28px;
   }
 }
+
+/* ── Tech stack logo wall ────────────────────────────────── */
+.arsenal-tech { padding: clamp(60px,8vh,80px) clamp(40px,8vw,120px) clamp(80px,10vh,120px); border-top: 1px solid rgba(255,255,255,0.04); }
+.arsenal-tech__label { font-family: "Courier New",monospace; font-size: 0.52rem; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(255,255,255,0.25); display: block; margin-bottom: 48px; }
+.arsenal-tech__grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.arsenal-tech__pill { display: inline-flex; align-items: center; gap: 10px; padding: 10px 20px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); cursor: default; will-change: transform; }
+.arsenal-tech__badge { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: "Courier New",monospace; font-size: 0.5rem; font-weight: bold; flex-shrink: 0; }
+.arsenal-tech__logo-img { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; opacity: 0.8; filter: brightness(0) invert(1); }
+.arsenal-tech__name { font-family: "Courier New",monospace; font-size: 0.62rem; letter-spacing: 0.06em; color: rgba(255,255,255,0.5); white-space: nowrap; }
+
+@media (max-width: 780px) {
+  .arsenal-tech { padding: 60px 20px 80px; }
+  .arsenal-tech__pill { padding: 8px 14px; }
+  .arsenal-tech__name { font-size: 0.55rem; }
+}
+
+/* ── Zone video thumbnail ────────────────────────────────── */
+.arsenal-zone__video-thumb {
+  position: absolute;
+  bottom: clamp(20px, 4vh, 40px);
+  right: clamp(40px, 8vw, 120px);
+  width: 280px;
+  height: 158px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.4s ease, border-color 0.4s ease;
+  z-index: 2;
+}
+
+.arsenal-zone:hover .arsenal-zone__video-thumb {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.arsenal-zone__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.arsenal-zone__video-label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+}
+
+.arsenal-zone__video-tag {
+  font-family: "Courier New", monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 3px 7px;
+  border-radius: 3px;
+}
+
+@media (max-width: 780px) {
+  .arsenal-zone__video-thumb { display: none; }
+}

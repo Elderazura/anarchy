@@ -1,96 +1,107 @@
 import { useEffect, useRef } from "react";
 
-const MAX_PARTICLES = 280;
-const GRAVITY = 0.028;
-const DAMPING = 0.992;
-const BOUNCE = 0.5;
-const FLOOR_FRICTION = 0.88;
+// ── Constants ──────────────────────────────────────────────────────────────
+const FOCAL = 420;          // perspective focal length
+const FIELD_W = 1800;       // world X half-width
+const FIELD_H = 1800;       // world Y half-height
+const FIELD_DEPTH = 1600;   // world Z range (0 = camera, FIELD_DEPTH = far)
 
-const ATTRACT_RADIUS = 150;
-const ATTRACT_FORCE = 0.15;
-const REPEL_RADIUS = 120;
-const REPEL_FORCE = 0.45;
-const BURST_SPEED_THRESHOLD = 8;
-const MODE_SWITCH_SPEED = 2;
+const NUM_STARS = 580;
+const NUM_NEBULA = 7;
+const SHOOTING_INTERVAL = 3800; // ms between shooting stars
 
-function getSpawnColor() {
-  const scrollFraction = window.scrollY / window.innerHeight;
-  if (scrollFraction < 1) return { h: 185 + Math.random() * 10, s: 70, l: 70 };
-  if (scrollFraction < 2) return { h: 35 + Math.random() * 10, s: 80, l: 65 };
-  if (scrollFraction < 3) return { h: 155 + Math.random() * 10, s: 70, l: 68 };
-  return { h: 200, s: 20, l: 80 };
-}
+// Scroll-zone accent colors for nebula tinting
+const NEBULA_COLORS = [
+  [126, 200, 232],  // works — cyan
+  [126, 232, 192],  // studio — mint
+  [255, 107, 53],   // services — orange
+  [179, 136, 255],  // contact — violet
+];
 
-function createEdgeParticle(vpW, vpH) {
-  const { h, s, l } = getSpawnColor();
-  const typeRoll = Math.random();
-  const type = typeRoll < 0.08 ? "spark" : typeRoll < 0.20 ? "diamond" : "circle";
-  const size = type === "spark" ? Math.random() * 5 + 3 : Math.random() * 4 + 0.8;
-  const isFast = Math.random() < 0.12;
-  const speed = isFast ? Math.random() * 1.4 + 0.8 : Math.random() * 0.35 + 0.05;
-
-  const edge = Math.floor(Math.random() * 4);
-  let x, y, vx, vy;
-  const spread = (Math.random() - 0.5) * 0.9;
-
-  if (edge === 0) {
-    x = Math.random() * vpW;
-    y = 0;
-    vx = Math.cos(spread) * speed * (Math.random() < 0.5 ? -1 : 1);
-    vy = Math.abs(Math.sin(spread)) * speed + 0.1;
-  } else if (edge === 1) {
-    x = vpW;
-    y = Math.random() * vpH;
-    vx = -speed;
-    vy = (Math.random() - 0.5) * speed;
-  } else if (edge === 2) {
-    x = Math.random() * vpW;
-    y = vpH;
-    vx = (Math.random() - 0.5) * speed;
-    vy = -speed;
-  } else {
-    x = 0;
-    y = Math.random() * vpH;
-    vx = speed;
-    vy = (Math.random() - 0.5) * speed;
-  }
-
+// ── Helpers ────────────────────────────────────────────────────────────────
+function project(wx, wy, wz, cx, cy) {
+  const scale = FOCAL / (FOCAL + wz);
   return {
-    x, y, vx, vy,
-    h, s, l,
-    size,
-    type,
-    opacity: Math.random() * 0.52 + 0.1,
-    life: 0,
-    maxLife: Math.floor(Math.random() * 280 + 120),
-    trail: [],
+    sx: cx + wx * scale,
+    sy: cy + wy * scale,
+    scale,
   };
 }
 
-function createBurstParticle(x, y, dirX, dirY, speed, vpW, vpH) {
-  const { h, s, l } = getSpawnColor();
-  const typeRoll = Math.random();
-  const type = typeRoll < 0.08 ? "spark" : typeRoll < 0.20 ? "diamond" : "circle";
-  const size = type === "spark" ? Math.random() * 5 + 3 : Math.random() * 3 + 1;
+function randRange(a, b) {
+  return a + Math.random() * (b - a);
+}
 
-  // Velocity roughly along cursor direction with spread
-  const baseSpeed = speed * (0.12 + Math.random() * 0.18);
-  const angle = Math.atan2(dirY, dirX) + (Math.random() - 0.5) * 1.2;
-  const vx = Math.cos(angle) * baseSpeed;
-  const vy = Math.sin(angle) * baseSpeed;
+function lerpColor(a, b, t) {
+  return a.map((v, i) => v + (b[i] - v) * t);
+}
+
+// ── Star factory ───────────────────────────────────────────────────────────
+function makeStar() {
+  const z = randRange(0, FIELD_DEPTH);
+  // Brightness inversely proportional to depth (far = dimmer)
+  const depthFrac = z / FIELD_DEPTH;
+  const baseSize = depthFrac < 0.35
+    ? randRange(1.2, 3.0)    // near — larger
+    : randRange(0.3, 1.2);   // far — tiny
+
+  // Color: mostly white/ice-blue, rare warm accent
+  const warm = Math.random() < 0.07;
+  const h = warm ? randRange(20, 50) : randRange(190, 230);
+  const s = warm ? 80 : randRange(10, 45);
+  const l = randRange(75, 98);
 
   return {
-    x, y, vx, vy,
+    x: randRange(-FIELD_W, FIELD_W),
+    y: randRange(-FIELD_H, FIELD_H),
+    z,
+    vx: randRange(-0.12, 0.12),
+    vy: randRange(-0.06, 0.06),
+    vz: 0,
+    size: baseSize,
     h, s, l,
-    size,
-    type,
-    opacity: Math.random() * 0.6 + 0.2,
-    life: 0,
-    maxLife: Math.floor(Math.random() * 160 + 80),
-    trail: [],
+    opacity: depthFrac < 0.35 ? randRange(0.5, 0.95) : randRange(0.12, 0.55),
+    twinklePeriod: randRange(80, 260),
+    twinkleOffset: Math.random() * 300,
+    isShooting: false,
   };
 }
 
+// ── Nebula factory ─────────────────────────────────────────────────────────
+function makeNebula(index) {
+  return {
+    x: randRange(-FIELD_W * 0.7, FIELD_W * 0.7),
+    y: randRange(-FIELD_H * 0.7, FIELD_H * 0.7),
+    z: randRange(FIELD_DEPTH * 0.5, FIELD_DEPTH * 0.95),
+    vx: randRange(-0.04, 0.04),
+    vy: randRange(-0.03, 0.03),
+    radius: randRange(260, 560),
+    colorIdx: index % NEBULA_COLORS.length,
+    opacity: randRange(0.018, 0.055),
+  };
+}
+
+// ── Shooting star factory ──────────────────────────────────────────────────
+function makeShootingStar(vpW, vpH) {
+  const angle = randRange(-0.4, 0.4) - Math.PI * 0.25; // mostly left-to-right diagonal
+  const speed = randRange(14, 24);
+  return {
+    x: randRange(-FIELD_W * 0.5, FIELD_W * 0.5),
+    y: randRange(-FIELD_H * 0.4, 0),
+    z: randRange(FIELD_DEPTH * 0.1, FIELD_DEPTH * 0.4),
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    vz: 0,
+    size: randRange(1.5, 2.5),
+    trail: [],
+    maxTrail: Math.floor(randRange(18, 36)),
+    life: 0,
+    maxLife: Math.floor(randRange(50, 90)),
+    isShooting: true,
+  };
+}
+
+// ── Main component ─────────────────────────────────────────────────────────
 export default function PhysicsParticles() {
   const canvasRef = useRef(null);
 
@@ -102,6 +113,7 @@ export default function PhysicsParticles() {
     let rafId;
     let vpW = window.innerWidth;
     let vpH = window.innerHeight;
+    let frame = 0;
 
     const resize = () => {
       vpW = window.innerWidth;
@@ -110,214 +122,218 @@ export default function PhysicsParticles() {
       canvas.height = vpH;
     };
     resize();
-
-    // Mouse state
-    let mouseX = 0, mouseY = 0;
-    let prevMouseX = 0, prevMouseY = 0;
-    let mouseVX = 0, mouseVY = 0;
-    let mouseSpeed = 0;
-    let mouseOnScreen = false;
-
-    const onMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      mouseOnScreen = true;
-    };
-    const onLeave = () => { mouseOnScreen = false; };
-
-    window.addEventListener("mousemove", onMove, { passive: true });
-    window.addEventListener("mouseleave", onLeave);
     window.addEventListener("resize", resize);
 
-    // Particle pool
-    const particles = [];
-    let frameCount = 0;
-    let lastEdgeSpawn = 0;
+    // Mouse
+    let mx = vpW / 2, my = vpH / 2;
+    let pmx = mx, pmy = my;
+    let mvx = 0, mvy = 0;
+    let mspeed = 0;
+    let mouseActive = false;
+    const onMove = (e) => { mx = e.clientX; my = e.clientY; mouseActive = true; };
+    const onLeave = () => { mouseActive = false; };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mouseleave", onLeave);
 
-    // Seed some initial particles
-    for (let i = 0; i < 50; i++) {
-      particles.push(createEdgeParticle(vpW, vpH));
-    }
+    // Stars
+    const stars = Array.from({ length: NUM_STARS }, makeStar);
 
-    const drawCircle = (p, screenY, alpha) => {
-      const grad = ctx.createRadialGradient(p.x, screenY, 0, p.x, screenY, p.size);
-      grad.addColorStop(0, `hsla(${p.h},${p.s}%,${p.l}%,${alpha * 0.9})`);
-      grad.addColorStop(1, `hsla(${p.h},${p.s}%,${p.l}%,0)`);
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(p.x, screenY, p.size, 0, Math.PI * 2);
-      ctx.fill();
+    // Nebulae
+    const nebulae = Array.from({ length: NUM_NEBULA }, (_, i) => makeNebula(i));
+
+    // Shooting stars (dynamic list)
+    const shooters = [];
+    let lastShoot = 0;
+
+    // ── Scroll-driven Z-flight ─────────────────────────────────────────────
+    // As user scrolls, we shift the viewport Y center downward (flying effect)
+    let scrollYOffset = 0;
+    let targetScrollYOffset = 0;
+    const onScroll = () => {
+      targetScrollYOffset = window.scrollY * 0.18;
     };
+    window.addEventListener("scroll", onScroll, { passive: true });
 
-    const drawDiamond = (p, screenY, alpha) => {
-      const sz = p.size * 1.5;
-      ctx.save();
-      ctx.translate(p.x, screenY);
-      ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = `hsla(${p.h},${p.s}%,${p.l}%,${alpha})`;
-      ctx.fillRect(-sz / 2, -sz / 2, sz, sz);
-      ctx.restore();
-    };
-
-    const drawSpark = (p, screenY, alpha) => {
-      const ang = Math.atan2(p.vy, p.vx);
-      ctx.save();
-      ctx.translate(p.x, screenY);
-      ctx.rotate(ang);
-      ctx.lineCap = "round";
-      ctx.strokeStyle = `hsla(${p.h},${p.s}%,${p.l}%,${alpha})`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(p.size, 0);
-      ctx.stroke();
-      ctx.restore();
-    };
-
-    const drawTrail = (p, scrollY) => {
-      if (p.trail.length < 2) return;
-      if (p.type !== "circle" && p.type !== "diamond") return;
-
-      ctx.globalCompositeOperation = "source-over";
-      for (let t = 0; t < p.trail.length - 1; t++) {
-        const alpha = (t / p.trail.length) * 0.12;
-        const screenTY0 = p.trail[t].y - scrollY;
-        const screenTY1 = p.trail[t + 1].y - scrollY;
-        ctx.strokeStyle = `hsla(${p.h},${p.s}%,${p.l}%,${alpha})`;
-        ctx.lineWidth = p.size * 0.5;
-        ctx.beginPath();
-        ctx.moveTo(p.trail[t].x, screenTY0);
-        ctx.lineTo(p.trail[t + 1].x, screenTY1);
-        ctx.stroke();
-      }
-      ctx.globalCompositeOperation = "lighter";
-    };
-
-    const tick = () => {
+    // ── Render ─────────────────────────────────────────────────────────────
+    const tick = (now) => {
       rafId = requestAnimationFrame(tick);
-      frameCount++;
+      frame++;
 
-      const scrollY = window.scrollY;
+      mvx = mx - pmx;
+      mvy = my - pmy;
+      mspeed = Math.sqrt(mvx * mvx + mvy * mvy);
+      pmx = mx; pmy = my;
 
-      // Update mouse velocity
-      mouseVX = mouseX - prevMouseX;
-      mouseVY = mouseY - prevMouseY;
-      mouseSpeed = Math.sqrt(mouseVX * mouseVX + mouseVY * mouseVY);
-      prevMouseX = mouseX;
-      prevMouseY = mouseY;
+      // Ease scroll offset
+      scrollYOffset += (targetScrollYOffset - scrollYOffset) * 0.04;
 
-      // Spawn edge particles every 4 frames
-      if (frameCount - lastEdgeSpawn >= 4 && particles.length < MAX_PARTICLES) {
-        particles.push(createEdgeParticle(vpW, vpH));
-        lastEdgeSpawn = frameCount;
-      }
-
-      // Cursor burst spawn when speed > threshold
-      if (mouseOnScreen && mouseSpeed > BURST_SPEED_THRESHOLD && particles.length < MAX_PARTICLES) {
-        const count = Math.floor(Math.random() * 3) + 3; // 3–5
-        for (let b = 0; b < count && particles.length < MAX_PARTICLES; b++) {
-          particles.push(createBurstParticle(mouseX, mouseY + scrollY, mouseVX, mouseVY, mouseSpeed, vpW, vpH));
-        }
-      }
+      const scrollFrac = Math.min(window.scrollY / window.innerHeight / 3, 1);
+      const cx = vpW / 2;
+      const cy = vpH / 2 - scrollYOffset * 0.5;
 
       ctx.clearRect(0, 0, vpW, vpH);
+
+      // ── Nebulae (drawn first, very large blurred radial gradients) ────
+      ctx.globalCompositeOperation = "source-over";
+      for (const n of nebulae) {
+        n.x += n.vx;
+        n.y += n.vy;
+
+        const proj = project(n.x, n.y, n.z, cx, cy);
+        const r = n.radius * proj.scale;
+        if (r < 10) continue;
+
+        // Pick color blend based on scroll zone
+        const colorA = NEBULA_COLORS[n.colorIdx];
+        const colorB = NEBULA_COLORS[(n.colorIdx + 1) % NEBULA_COLORS.length];
+        const [nr, ng, nb] = lerpColor(colorA, colorB, scrollFrac);
+
+        const grad = ctx.createRadialGradient(proj.sx, proj.sy, 0, proj.sx, proj.sy, r);
+        grad.addColorStop(0, `rgba(${nr|0},${ng|0},${nb|0},${n.opacity})`);
+        grad.addColorStop(1, `rgba(${nr|0},${ng|0},${nb|0},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(proj.sx, proj.sy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // ── Stars ──────────────────────────────────────────────────────────
       ctx.globalCompositeOperation = "lighter";
 
-      const isAttract = mouseOnScreen && mouseSpeed < MODE_SWITCH_SPEED;
+      for (const s of stars) {
+        // Gentle drift
+        s.x += s.vx;
+        s.y += s.vy;
 
-      let i = particles.length;
-      while (i--) {
-        const p = particles[i];
-        p.life++;
-
-        if (p.life > p.maxLife) {
-          particles.splice(i, 1);
-          continue;
-        }
-
-        // Record trail (absolute page coords)
-        p.trail.push({ x: p.x, y: p.y });
-        if (p.trail.length > 4) p.trail.shift();
-
-        // Gravity
-        p.vy += GRAVITY;
-
-        // Air damping
-        p.vx *= DAMPING;
-        p.vy *= DAMPING;
-
-        // Mouse interaction
-        if (mouseOnScreen) {
-          const screenY = p.y - scrollY;
-          const dx = p.x - mouseX;
-          const dy = screenY - mouseY;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (isAttract) {
-            if (dist < ATTRACT_RADIUS && dist > 0.1) {
-              const force = (ATTRACT_RADIUS - dist) / ATTRACT_RADIUS * ATTRACT_FORCE;
-              // Attract: push toward cursor (negative direction)
-              p.vx -= (dx / dist) * force;
-              p.vy -= (dy / dist) * force;
-            }
-          } else {
-            if (dist < REPEL_RADIUS && dist > 0.1) {
-              const force = (REPEL_RADIUS - dist) / REPEL_RADIUS * REPEL_FORCE;
-              p.vx += (dx / dist) * force;
-              p.vy += (dy / dist) * force;
-            }
+        // Cursor gravity well (near stars only)
+        if (mouseActive && s.z < FIELD_DEPTH * 0.45) {
+          const proj = project(s.x, s.y, s.z, cx, cy);
+          const dx = proj.sx - mx;
+          const dy = proj.sy - my;
+          const dist2 = dx * dx + dy * dy;
+          const GRAV_R2 = 28000;
+          if (dist2 < GRAV_R2 && dist2 > 1) {
+            const dist = Math.sqrt(dist2);
+            const force = (1 - dist2 / GRAV_R2) * 0.18 * proj.scale;
+            s.vx -= (dx / dist) * force;
+            s.vy -= (dy / dist) * force;
           }
         }
 
-        // Move (y in page coords)
-        p.x += p.vx;
-        p.y += p.vy;
+        // Velocity damping
+        s.vx *= 0.988;
+        s.vy *= 0.988;
 
-        // Floor bounce (viewport bottom in page coords)
-        const vpFloor = scrollY + vpH - 10;
-        if (p.y > vpFloor) {
-          p.y = vpFloor;
-          p.vy = -Math.abs(p.vy) * BOUNCE;
-          p.vx *= FLOOR_FRICTION;
+        // Wrap world bounds
+        if (s.x > FIELD_W) s.x -= FIELD_W * 2;
+        if (s.x < -FIELD_W) s.x += FIELD_W * 2;
+        if (s.y > FIELD_H) s.y -= FIELD_H * 2;
+        if (s.y < -FIELD_H) s.y += FIELD_H * 2;
+
+        const proj = project(s.x, s.y, s.z, cx, cy);
+        if (proj.sx < -20 || proj.sx > vpW + 20) continue;
+        if (proj.sy < -20 || proj.sy > vpH + 20) continue;
+
+        // Twinkle
+        const twinkle = 0.75 + 0.25 * Math.sin((frame + s.twinkleOffset) / s.twinklePeriod * Math.PI * 2);
+        const sz = s.size * proj.scale * twinkle;
+        const alpha = s.opacity * twinkle;
+
+        if (sz < 0.3 || alpha < 0.02) continue;
+
+        const grad = ctx.createRadialGradient(proj.sx, proj.sy, 0, proj.sx, proj.sy, sz * 2.2);
+        grad.addColorStop(0, `hsla(${s.h},${s.s}%,${s.l}%,${alpha})`);
+        grad.addColorStop(0.4, `hsla(${s.h},${s.s}%,${s.l}%,${alpha * 0.5})`);
+        grad.addColorStop(1, `hsla(${s.h},${s.s}%,${s.l}%,0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(proj.sx, proj.sy, sz * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bright core for near stars
+        if (sz > 1.2) {
+          ctx.fillStyle = `hsla(${s.h},${s.s}%,98%,${alpha * 0.8})`;
+          ctx.beginPath();
+          ctx.arc(proj.sx, proj.sy, sz * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // ── Shooting stars ─────────────────────────────────────────────────
+      if (now - lastShoot > SHOOTING_INTERVAL) {
+        shooters.push(makeShootingStar(vpW, vpH));
+        lastShoot = now;
+      }
+
+      ctx.globalCompositeOperation = "lighter";
+
+      let si = shooters.length;
+      while (si--) {
+        const s = shooters[si];
+        s.life++;
+
+        if (s.life > s.maxLife) {
+          shooters.splice(si, 1);
+          continue;
         }
 
-        // Horizontal wrap
-        if (p.x < -p.size) p.x = vpW + p.size;
-        if (p.x > vpW + p.size) p.x = -p.size;
+        const proj = project(s.x, s.y, s.z, cx, cy);
+        s.trail.unshift({ sx: proj.sx, sy: proj.sy });
+        if (s.trail.length > s.maxTrail) s.trail.pop();
 
-        // Only draw if in viewport
-        const screenY = p.y - scrollY;
-        if (screenY < -p.size * 2 || screenY > vpH + p.size * 2) continue;
+        s.x += s.vx;
+        s.y += s.vy;
 
-        const lifeFade = Math.min(1, p.life / 20) * Math.min(1, (p.maxLife - p.life) / 30);
-        const alpha = p.opacity * lifeFade;
-
-        // Draw trail (switches composite op internally)
-        drawTrail(p, scrollY);
-
-        // Draw particle with additive blending
-        ctx.globalCompositeOperation = "lighter";
-
-        if (p.type === "circle") {
-          drawCircle(p, screenY, alpha);
-        } else if (p.type === "diamond") {
-          drawDiamond(p, screenY, alpha);
-        } else {
-          drawSpark(p, screenY, alpha);
+        // Draw trail
+        for (let t = 0; t < s.trail.length - 1; t++) {
+          const a = (1 - t / s.trail.length) * (1 - s.life / s.maxLife) * 0.9;
+          ctx.strokeStyle = `rgba(200,230,255,${a})`;
+          ctx.lineWidth = s.size * (1 - t / s.trail.length) * proj.scale;
+          ctx.beginPath();
+          ctx.moveTo(s.trail[t].sx, s.trail[t].sy);
+          ctx.lineTo(s.trail[t + 1].sx, s.trail[t + 1].sy);
+          ctx.stroke();
         }
+
+        // Head glow
+        const headAlpha = (1 - s.life / s.maxLife) * 0.95;
+        const headGrad = ctx.createRadialGradient(proj.sx, proj.sy, 0, proj.sx, proj.sy, s.size * 4 * proj.scale);
+        headGrad.addColorStop(0, `rgba(240,248,255,${headAlpha})`);
+        headGrad.addColorStop(1, `rgba(180,220,255,0)`);
+        ctx.fillStyle = headGrad;
+        ctx.beginPath();
+        ctx.arc(proj.sx, proj.sy, s.size * 4 * proj.scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // ── Cursor burst particles (fast swipe) ────────────────────────────
+      if (mouseActive && mspeed > 9 && frame % 2 === 0) {
+        const worldX = (mx - cx) * (FOCAL + FIELD_DEPTH * 0.3) / FOCAL;
+        const worldY = (my - cy) * (FOCAL + FIELD_DEPTH * 0.3) / FOCAL;
+        const burst = makeStar();
+        burst.x = worldX + randRange(-30, 30);
+        burst.y = worldY + randRange(-30, 30);
+        burst.z = FIELD_DEPTH * 0.3;
+        burst.vx = mvx * 0.4 + randRange(-1, 1);
+        burst.vy = mvy * 0.4 + randRange(-1, 1);
+        burst.size = randRange(1.5, 3);
+        burst.opacity = 0.8;
+        stars.push(burst);
+        if (stars.length > NUM_STARS + 40) stars.shift();
       }
 
       ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = 1;
     };
 
-    tick();
+    requestAnimationFrame((t) => { lastShoot = t; tick(t); });
 
     return () => {
       cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseleave", onLeave);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 

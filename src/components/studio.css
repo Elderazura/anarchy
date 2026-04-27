@@ -216,3 +216,98 @@
     padding: 40px 20px;
   }
 }
+
+/* ─── Philosophy block ───────────────────────────────────────────────────── */
+
+.mind-philosophy {
+  padding: clamp(60px, 8vh, 80px) clamp(40px, 8vw, 120px);
+  background: rgba(126, 200, 232, 0.02);
+}
+
+.mind-philosophy__grid {
+  display: grid;
+  grid-template-columns: 55% 45%;
+  gap: 60px;
+  align-items: start;
+}
+
+.mind-philosophy__quote {
+  font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+  font-size: clamp(1.5rem, 3.5vw, 2.8rem);
+  font-style: italic;
+  line-height: 1.2;
+  color: #f0f6ff;
+  margin: 0 0 16px;
+}
+
+.mind-philosophy__attr {
+  font-family: "Courier New", monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.mind-philosophy__body {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 24px;
+}
+
+/* ─── How we work ────────────────────────────────────────────────────────── */
+
+.mind-methods {
+  padding: clamp(60px, 8vh, 80px) clamp(40px, 8vw, 120px);
+}
+
+.mind-methods__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.mind-methods__num {
+  font-family: "Courier New", monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.24em;
+  color: #7ec8e8;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.mind-methods__title {
+  font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+  font-size: 1.4rem;
+  color: #f0f6ff;
+  margin: 0 0 12px;
+  font-weight: normal;
+}
+
+.mind-methods__body {
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}
+
+@media (max-width: 780px) {
+  .mind-philosophy__grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .mind-methods__grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+/* FloatingOrb wrapper inside ethos section */
+.mind-orb-wrap {
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: center;
+  filter: drop-shadow(0 0 60px rgba(126, 200, 232, 0.12));
+}
