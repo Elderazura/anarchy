@@ -6,9 +6,11 @@ const FIELD_W = 1800;       // world X half-width
 const FIELD_H = 1800;       // world Y half-height
 const FIELD_DEPTH = 1600;   // world Z range (0 = camera, FIELD_DEPTH = far)
 
-const NUM_STARS = 580;
-const NUM_NEBULA = 7;
-const SHOOTING_INTERVAL = 3800; // ms between shooting stars
+// Reduce particle budget on mobile to stay within thermal limits
+const IS_MOBILE = typeof window !== "undefined" && window.innerWidth < 768;
+const NUM_STARS = IS_MOBILE ? 160 : 580;
+const NUM_NEBULA = IS_MOBILE ? 3 : 7;
+const SHOOTING_INTERVAL = IS_MOBILE ? 6000 : 3800; // ms between shooting stars
 
 // Scroll-zone accent colors for nebula tinting
 const NEBULA_COLORS = [

@@ -132,6 +132,143 @@
   margin: 0;
 }
 
+/* ─── Contact Form ───────────────────────────────────────────────── */
+
+.signal-form-wrap {
+  width: 100%;
+  max-width: 680px;
+  margin-top: 48px;
+}
+
+.signal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+
+.signal-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.signal-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.signal-form-label {
+  font-family: "Courier New", monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.signal-form-input {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+  font-family: "Courier New", monospace;
+  font-size: 0.78rem;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+.signal-form-input::placeholder {
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.signal-form-input:focus {
+  border-color: rgba(0, 255, 224, 0.4);
+  background: rgba(0, 255, 224, 0.03);
+}
+
+.signal-form-input--error {
+  border-color: rgba(255, 60, 90, 0.5);
+}
+
+.signal-form-textarea {
+  resize: vertical;
+  min-height: 130px;
+}
+
+.signal-form-error {
+  font-family: "Courier New", monospace;
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+  color: rgba(255, 80, 100, 0.8);
+  margin: 0;
+}
+
+.signal-form-error--global {
+  text-align: center;
+}
+
+.signal-form-submit {
+  font-family: "Courier New", monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #00ffe0;
+  background: transparent;
+  border: 1px solid rgba(0, 255, 224, 0.3);
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, letter-spacing 0.2s ease;
+  align-self: flex-start;
+}
+
+.signal-form-submit:hover:not(:disabled) {
+  background: rgba(0, 255, 224, 0.08);
+  border-color: rgba(0, 255, 224, 0.6);
+  letter-spacing: 0.26em;
+}
+
+.signal-form-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Success state */
+.signal-form-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  border: 1px solid rgba(0, 255, 224, 0.15);
+  text-align: center;
+}
+
+.signal-form-success__icon {
+  font-size: 2rem;
+  color: #00ffe0;
+  line-height: 1;
+}
+
+.signal-form-success__title {
+  font-family: "Didot", "Bodoni MT", "Times New Roman", serif;
+  font-size: 1.6rem;
+  color: #ffffff;
+  margin: 0;
+}
+
+.signal-form-success__body {
+  font-family: "Courier New", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
 /* ─── Responsive ─────────────────────────────────────────────────── */
 
 @media (max-width: 780px) {
@@ -141,5 +278,14 @@
 
   .signal-headline {
     font-size: clamp(2.8rem, 12vw, 5rem);
+  }
+
+  .signal-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .signal-form-submit {
+    align-self: stretch;
+    text-align: center;
   }
 }

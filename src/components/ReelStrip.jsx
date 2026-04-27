@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import "./reel-strip.css";
 
@@ -37,6 +38,37 @@ const PANELS = [
 ];
 
 export default function ReelStrip() {
+  const videoRefs = useRef([]);
+
+  useEffect(() => {
+    const observers = videoRefs.current.map((video) => {
+      if (!video) return null;
+
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        },
+        { threshold: 0.4 }
+      );
+
+      observer.observe(video);
+      return observer;
+    });
+
+    return () => {
+      observers.forEach((obs, i) => {
+        if (obs && videoRefs.current[i]) {
+          obs.unobserve(videoRefs.current[i]);
+        }
+        obs?.disconnect();
+      });
+    };
+  }, []);
+
   return (
     <div className="reel-strip">
       {PANELS.map((panel, index) => (
@@ -46,23 +78,21 @@ export default function ReelStrip() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6, delay: index * 0.12, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
         >
           <video
+            ref={(el) => { videoRefs.current[index] = el; }}
             className="reel-panel__video"
             src={panel.video}
-            autoPlay
             muted
             loop
             playsInline
+            preload="metadata"
           />
           <div className="reel-panel__overlay" />
           <div className="reel-panel__content">
             <div className="reel-panel__text">
-              <span
-                className="reel-panel__label"
-                style={{ color: panel.accent }}
-              >
+              <span className="reel-panel__label" style={{ color: panel.accent }}>
                 {panel.label}
               </span>
               <h3 className="reel-panel__title">{panel.title}</h3>
@@ -70,16 +100,9 @@ export default function ReelStrip() {
               <button
                 type="button"
                 className="reel-panel__cta"
-                style={{
-                  color: panel.accent,
-                  border: `1px solid ${panel.accent}80`,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = `${panel.accent}26`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
+                style={{ color: panel.accent, border: `1px solid ${panel.accent}80` }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = `${panel.accent}26`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
                 {panel.cta} →
               </button>

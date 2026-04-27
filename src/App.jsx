@@ -11,6 +11,8 @@ import WorksGrid from "./components/WorksGrid";
 import ServicesGrid from "./components/ServicesGrid";
 import StudioSection from "./components/StudioSection";
 import ReelStrip from "./components/ReelStrip";
+import HorizontalShowcase from "./components/HorizontalShowcase";
+import CustomCursor from "./components/ui/CustomCursor";
 import ContactSection from "./components/ContactSection";
 import ShimmerButton from "./components/ui/ShimmerButton";
 import PhysicsParticles from "./components/PhysicsParticles";
@@ -72,6 +74,7 @@ export default function App() {
 
   return (
     <>
+      <CustomCursor />
       <ShaderBackground />
       <LoadingScreen isReady={sceneReady} />
 
@@ -230,8 +233,8 @@ export default function App() {
 
                   <div className="section-divider" />
 
-                  {/* 02b — Featured Reels (per-service project showcase) */}
-                  <ReelStrip />
+                  {/* 02b — Featured Reels: pinned horizontal scroll reel */}
+                  <HorizontalShowcase />
 
                   {/* 03 — Services: The Arsenal */}
                   <section ref={(el) => { servicesRef.current = el; registerTarget(el); }} className="section-shell">

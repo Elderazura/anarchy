@@ -1,0 +1,264 @@
+/* ─── Horizontal Showcase ────────────────────────────────────────────────── */
+
+/* Outer section: height = 4 × 100vh set via inline style */
+.hscroll-section {
+  position: relative;
+  width: 100%;
+}
+
+/* Section intro — shown above the sticky container, scrolls away */
+.hscroll-intro {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: clamp(48px, 8vh, 100px) clamp(24px, 6vw, 100px) 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+}
+
+.hscroll-intro__label {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.5rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(126, 200, 232, 0.35);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.hscroll-intro__title {
+  font-family: var(--font-display, "Didot", "Bodoni MT", "Times New Roman", serif);
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  font-weight: normal;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1;
+}
+
+.hscroll-intro__hint {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.48rem;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.18);
+  margin: 0;
+  margin-left: auto;
+}
+
+/* Sticky container — pinned by GSAP or CSS sticky on mobile */
+.hscroll-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Horizontal track — all panels in a row */
+.hscroll-track {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: max-content;
+  will-change: transform;
+}
+
+/* Individual panel */
+.hscroll-panel {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Video fills panel */
+.hscroll-panel__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+  transition: opacity 0.6s ease;
+}
+
+.hscroll-panel:hover .hscroll-panel__video {
+  opacity: 0.72;
+}
+
+/* Cinematic gradient — left-side text is readable, right side breathes */
+.hscroll-panel__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.55) 45%,
+    rgba(0, 0, 0, 0.12) 80%,
+    transparent 100%
+  );
+  z-index: 1;
+}
+
+/* Text content */
+.hscroll-panel__content {
+  position: absolute;
+  bottom: clamp(60px, 12vh, 120px);
+  left: clamp(32px, 6vw, 100px);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(520px, 50vw);
+}
+
+.hscroll-panel__num {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 700;
+  line-height: 1;
+  margin: 0;
+  user-select: none;
+  letter-spacing: -0.04em;
+}
+
+.hscroll-panel__category {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.hscroll-panel__title {
+  font-family: var(--font-display, "Didot", "Bodoni MT", "Times New Roman", serif);
+  font-size: clamp(2.8rem, 5.5vw, 6rem);
+  font-weight: normal;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.hscroll-panel__tagline {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+  max-width: 380px;
+}
+
+.hscroll-panel__footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.hscroll-panel__bar {
+  display: block;
+  width: 36px;
+  height: 2px;
+  flex-shrink: 0;
+}
+
+.hscroll-panel__year {
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* Panel counter — bottom right */
+.hscroll-panel__dot {
+  position: absolute;
+  bottom: clamp(28px, 5vh, 48px);
+  right: clamp(24px, 4vw, 60px);
+  z-index: 3;
+  font-family: var(--font-mono, "Courier New", monospace);
+  font-size: 0.46rem;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.18);
+  user-select: none;
+}
+
+/* Progress bar — bottom of sticky pane */
+.hscroll-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.hscroll-progress-fill {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 255, 224, 0.6);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.05s linear;
+}
+
+/* ─── Mobile fallback ────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  /* Reset section height override */
+  .hscroll-section {
+    height: auto !important;
+  }
+
+  .hscroll-intro {
+    position: relative;
+    padding: 48px 20px 0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hscroll-intro__hint {
+    display: none;
+  }
+
+  .hscroll-sticky {
+    position: relative;
+    height: auto;
+    overflow: visible;
+  }
+
+  .hscroll-track {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hscroll-panel {
+    width: 100%;
+    height: 70vw;
+    min-height: 280px;
+  }
+
+  .hscroll-panel__content {
+    max-width: 90%;
+    bottom: 24px;
+    left: 20px;
+  }
+
+  .hscroll-panel__num {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+  }
+
+  .hscroll-panel__title {
+    font-size: clamp(1.6rem, 5vw, 2.8rem);
+  }
+
+  .hscroll-progress-bar {
+    display: none;
+  }
+}
